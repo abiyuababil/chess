@@ -529,35 +529,44 @@ class ChessApp {
 
     const momentsHtml = analysis.keyMoments.length > 0 ? analysis.keyMoments.map((km, idx) => {
       const badgeColor = km.classification === 'blunder' ? 'danger' : (km.classification === 'mistake' ? 'warning' : 'info');
-      const badgeLabel = km.classification === 'blunder' ? '🔴 BLUNDER' : (km.classification === 'mistake' ? '🟠 MISTAKE' : '🟡 INACCURACY');
+      const badgeLabel = km.classification === 'blunder' ? 'BLUNDER' : (km.classification === 'mistake' ? 'MISTAKE' : 'INACCURACY');
       return `
-        <div class="analysis-moment-card" onclick="window.chessApp.inspectAnalysisMoment(${idx})">
+        <div class="analysis-moment-card" id="moment-card-${idx}" onclick="window.chessApp.inspectAnalysisMoment(${idx})">
           <div class="moment-card-header">
             <span class="moment-badge ${badgeColor}">${badgeLabel}</span>
-            <span class="moment-move-num">Langkah ke-${km.moveNumber}</span>
+            <span class="moment-move-num">Langkah ${km.moveNumber}</span>
           </div>
-          <div class="moment-comparison">
-            <span class="move-played">Dimainkan: <strong>${km.playerMove}</strong></span>
-            <span class="move-best">Koreksi: <strong>${km.bestMove}</strong></span>
+
+          <div class="moment-split-boxes">
+            <div class="moment-played-box">
+              <span class="box-label">Langkah Anda:</span>
+              <span class="box-val">${km.playerMove}</span>
+            </div>
+            <div class="moment-best-box">
+              <span class="box-label">Saran Terbaik:</span>
+              <span class="box-val">${km.bestMove}</span>
+            </div>
           </div>
+
           <p class="moment-desc">${km.explanation}</p>
           <div class="moment-footer">
-            <span class="btn-inspect-link">👁️ Periksa Posisi Papan →</span>
+            <span class="btn-inspect-link">Lihat di Papan →</span>
           </div>
         </div>
       `;
-    }).join('') : `<div style="text-align:center;padding:24px;color:var(--text-muted);">🎉 Luar biasa! Tidak ada blunder atau kesalahan fatal yang terdeteksi di pertandingan ini!</div>`;
+    }).join('') : `<div style="text-align:center;padding:32px;color:var(--text-muted);">Tidak ada blunder atau kesalahan fatal. Permainan Anda sangat solid.</div>`;
 
     modal.innerHTML = `
       <div class="analysis-modal">
         <div class="analysis-modal-header">
           <div>
-            <h2>🔍 Post-Game Analysis (Koreksi & Evaluasi)</h2>
-            <p>${customTitle} • Tingkat Akurasi Anda: <strong style="color:var(--primary);">${analysis.accuracyPct}%</strong></p>
+            <h2>Analisis Pertandingan (Game Review)</h2>
+            <p>${customTitle} • Akurasi Permainan Anda: <strong style="color:var(--primary);font-size:15px;">${analysis.accuracyPct}%</strong></p>
           </div>
           <button class="btn-close-modal" onclick="window.chessApp.closeAnalysisModal()">✕</button>
         </div>
 
+        <!-- Legend & Accuracy Summary -->
         <div class="analysis-stats-bar">
           <div class="acc-stat-box">
             <span class="acc-val" style="color:var(--primary);">${analysis.accuracyPct}%</span>
@@ -582,23 +591,42 @@ class ChessApp {
         </div>
 
         <div class="analysis-modal-body">
-          <!-- Left: Review Board -->
+          <!-- Left: Review Board + Controls -->
           <div class="analysis-board-side">
             <div id="analysis-board-container"></div>
-            <div class="analysis-nav-controls">
-              <button class="btn-step" onclick="window.chessApp.stepAnalysis(0)">⏮️</button>
-              <button class="btn-step" onclick="window.chessApp.stepAnalysis(window.chessApp.analysisPly - 1)">◀</button>
-              <span id="analysis-move-display" style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;">Langkah 1</span>
-              <button class="btn-step" onclick="window.chessApp.stepAnalysis(window.chessApp.analysisPly + 1)">▶</button>
-              <button class="btn-step" onclick="window.chessApp.stepAnalysis(${analysis.positions.length - 1})">⏭️</button>
+
+            <!-- Comparison View Toggle -->
+            <div class="analysis-view-toggle">
+              <button class="btn-toggle-move" id="btn-toggle-played" onclick="window.chessApp.previewAnalysisMove('played')">
+                Langkah Anda (Merah)
+              </button>
+              <button class="btn-toggle-move active" id="btn-toggle-best" onclick="window.chessApp.previewAnalysisMove('best')">
+                Saran Terbaik (Hijau)
+              </button>
             </div>
-            <div id="analysis-eval-text" style="font-size:12px;color:var(--text-muted);text-align:center;">Evaluasi Posisi</div>
+
+            <!-- Step Navigation -->
+            <div class="analysis-nav-controls">
+              <button class="btn-step" onclick="window.chessApp.stepAnalysis(0)" title="Awal">|◀</button>
+              <button class="btn-step" onclick="window.chessApp.stepAnalysis(window.chessApp.analysisPly - 1)" title="Sebelumnya">◀</button>
+              <span id="analysis-move-display" style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;">Langkah 1</span>
+              <button class="btn-step" onclick="window.chessApp.stepAnalysis(window.chessApp.analysisPly + 1)" title="Berikutnya">▶</button>
+              <button class="btn-step" onclick="window.chessApp.stepAnalysis(${analysis.positions.length - 1})" title="Akhir">▶|</button>
+            </div>
+
+            <div id="analysis-eval-text" style="width:100%;"></div>
           </div>
 
-          <!-- Right: Key Moments List -->
+          <!-- Right: Key Moments List & Legend -->
           <div class="analysis-moments-side">
-            <h3 style="font-size:15px;margin-bottom:12px;color:#fff;display:flex;align-items:center;gap:6px;">
-              <span>🚨</span> Momen Kritis & Rekomendasi Perbaikan (${analysis.keyMoments.length})
+            <div class="analysis-guide-banner">
+              <div class="guide-item"><span class="guide-dot red"></span><strong>Blunder</strong>: Kesalahan fatal (rugi perwira/skakmat)</div>
+              <div class="guide-item"><span class="guide-dot orange"></span><strong>Mistake</strong>: Melepaskan inisiatif keuntungan</div>
+              <div class="guide-item"><span class="guide-dot yellow"></span><strong>Inaccuracy</strong>: Langkah pasif / kurang tajam</div>
+            </div>
+
+            <h3 style="font-size:14px;margin:12px 0 8px 0;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">
+              Daftar Evaluasi Langkah (${analysis.keyMoments.length})
             </h3>
             <div class="analysis-moments-scroll">
               ${momentsHtml}
@@ -608,21 +636,20 @@ class ChessApp {
 
         <div class="analysis-modal-footer">
           <button class="btn-game-action" onclick="window.chessApp.closeAnalysisModal()">Tutup</button>
-          <button class="btn-game-action primary" onclick="window.chessApp.closeAnalysisModal(); window.chessApp.newGame('${this.playerColor}')">🎮 Main Lagi (Rematch)</button>
+          <button class="btn-game-action primary" onclick="window.chessApp.closeAnalysisModal(); window.chessApp.newGame('${this.playerColor}')">Main Lagi</button>
         </div>
       </div>
     `;
 
     document.body.appendChild(modal);
 
-    // Initialize board synchronously after mounting modal
+    // Initialize board synchronously
     this.analysisBoard = new ChessBoardComponent('analysis-board-container', {
       orientation: this.playerColor,
       interactive: false
     });
 
     if (analysis.keyMoments.length > 0) {
-      // Focus on the first key blunder/mistake moment by default
       this.inspectAnalysisMoment(0);
     } else if (analysis.positions.length > 0) {
       this.stepAnalysis(this.analysisPly);
@@ -632,26 +659,62 @@ class ChessApp {
   inspectAnalysisMoment(idx) {
     if (!this.lastAnalysis || !this.lastAnalysis.keyMoments[idx]) return;
     const km = this.lastAnalysis.keyMoments[idx];
-    
-    if (this.analysisBoard) {
-      this.analysisBoard.setPosition(km.fenBefore);
-      // Highlight the blunder origin/target and the best move
+    this.currentInspectedMoment = km;
+
+    // Highlight active card
+    document.querySelectorAll('.analysis-moment-card').forEach(c => c.classList.remove('active'));
+    const activeCard = document.getElementById(`moment-card-${idx}`);
+    if (activeCard) activeCard.classList.add('active');
+
+    this.analysisPly = km.plyIndex;
+    this.previewAnalysisMove('best');
+  }
+
+  previewAnalysisMove(type = 'best') {
+    if (!this.currentInspectedMoment || !this.analysisBoard) return;
+    const km = this.currentInspectedMoment;
+
+    // Set board to position before move
+    this.analysisBoard.setPosition(km.fenBefore);
+
+    const btnPlayed = document.getElementById('btn-toggle-played');
+    const btnBest = document.getElementById('btn-toggle-best');
+    if (btnPlayed && btnBest) {
+      if (type === 'played') {
+        btnPlayed.classList.add('active');
+        btnBest.classList.remove('active');
+      } else {
+        btnBest.classList.add('active');
+        btnPlayed.classList.remove('active');
+      }
+    }
+
+    if (type === 'played') {
+      if (km.playedFrom && km.playedTo) {
+        this.analysisBoard.setAnalysisHighlight(km.playedFrom, km.playedTo, 'played');
+      }
+    } else {
       if (km.bestMoveFrom && km.bestMoveTo) {
-        this.analysisBoard.setHint({ from: km.bestMoveFrom, to: km.bestMoveTo });
+        this.analysisBoard.setAnalysisHighlight(km.bestMoveFrom, km.bestMoveTo, 'best');
       }
-      this.analysisPly = km.plyIndex;
-      
-      const moveDisplay = document.getElementById('analysis-move-display');
-      const evalText = document.getElementById('analysis-eval-text');
-      if (moveDisplay) moveDisplay.innerText = `Langkah ${km.moveNumber}. ${km.playerMove} (Koreksi: ${km.bestMove})`;
-      if (evalText) {
-        evalText.innerHTML = `
-          <div style="background:rgba(239,68,68,0.15);border:1px solid var(--danger);padding:8px 12px;border-radius:6px;color:#fca5a5;font-size:12px;margin-top:6px;">
-            <strong>${km.classification.toUpperCase()}</strong>: Dimainkan <em>${km.playerMove}</em>. Rekomendasi: <strong>${km.bestMove}</strong>.
-            <div style="color:var(--text-main);margin-top:2px;">${km.explanation}</div>
+    }
+
+    const moveDisplay = document.getElementById('analysis-move-display');
+    const evalText = document.getElementById('analysis-eval-text');
+    if (moveDisplay) moveDisplay.innerText = `Langkah ${km.moveNumber}. ${km.playerMove}`;
+
+    if (evalText) {
+      const isBlunder = km.classification === 'blunder';
+      const borderCol = isBlunder ? 'var(--danger)' : '#f97316';
+      const bgCol = isBlunder ? 'rgba(239,68,68,0.12)' : 'rgba(249,115,22,0.12)';
+      evalText.innerHTML = `
+        <div style="background:${bgCol};border:1px solid ${borderCol};padding:10px 14px;border-radius:8px;font-size:12.5px;line-height:1.4;">
+          <div style="font-weight:700;margin-bottom:4px;color:#fff;">
+            ${km.classification.toUpperCase()} • Anda memainkan <span style="color:#fca5a5;">${km.playerMove}</span> (Saran: <span style="color:#86efac;">${km.bestMove}</span>)
           </div>
-        `;
-      }
+          <div style="color:var(--text-muted);">${km.explanation}</div>
+        </div>
+      `;
     }
   }
 
@@ -665,13 +728,20 @@ class ChessApp {
 
     if (this.analysisBoard) {
       this.analysisBoard.setPosition(pos.fen);
+      this.analysisBoard.clearAnalysisHighlight();
       this.analysisBoard.clearHint();
 
       const moveDisplay = document.getElementById('analysis-move-display');
       const evalText = document.getElementById('analysis-eval-text');
 
       if (moveDisplay) moveDisplay.innerText = `Langkah ${pos.moveNumber} (${pos.san})`;
-      if (evalText) evalText.innerText = `Keunggulan Putih: ${pos.evalScore}% • Status: ${pos.classification.toUpperCase()}`;
+      if (evalText) {
+        evalText.innerHTML = `
+          <div style="background:rgba(255,255,255,0.03);border:1px solid var(--bg-card-border);padding:8px 12px;border-radius:6px;font-size:12px;color:var(--text-muted);text-align:center;">
+            Evaluasi: Keunggulan Putih ${pos.evalScore}% • Kategori: <strong>${pos.classification.toUpperCase()}</strong>
+          </div>
+        `;
+      }
     }
   }
 

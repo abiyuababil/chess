@@ -143,11 +143,23 @@ class ChessBoardComponent {
 
   setHint(move) {
     this.hintMove = move;
+    this.analysisHighlight = null;
     this.render();
   }
 
   clearHint() {
     this.hintMove = null;
+    this.analysisHighlight = null;
+    this.render();
+  }
+
+  setAnalysisHighlight(from, to, type = 'best') {
+    this.analysisHighlight = { from, to, type };
+    this.render();
+  }
+
+  clearAnalysisHighlight() {
+    this.analysisHighlight = null;
     this.render();
   }
 
@@ -370,6 +382,14 @@ class ChessBoardComponent {
         let highlightClass = '';
         if (this.selectedSquare === square) {
           highlightClass = ' sq-selected';
+        } else if (this.analysisHighlight) {
+          if (this.analysisHighlight.type === 'played') {
+            if (this.analysisHighlight.from === square) highlightClass = ' sq-played-from';
+            if (this.analysisHighlight.to === square) highlightClass = ' sq-played-to';
+          } else if (this.analysisHighlight.type === 'best') {
+            if (this.analysisHighlight.from === square) highlightClass = ' sq-best-from';
+            if (this.analysisHighlight.to === square) highlightClass = ' sq-best-to';
+          }
         } else if (this.lastMove && (this.lastMove.from === square || this.lastMove.to === square)) {
           highlightClass = ' sq-last-move';
         } else if (inCheckKingSquare === square) {
@@ -391,6 +411,10 @@ class ChessBoardComponent {
           }
         } else if (this.hintMove && this.hintMove.to === square) {
           legalMarker = `<div class="hint-target-ring"></div>`;
+        } else if (this.analysisHighlight && this.analysisHighlight.type === 'best' && this.analysisHighlight.to === square) {
+          legalMarker = `<div class="best-target-ring"></div>`;
+        } else if (this.analysisHighlight && this.analysisHighlight.type === 'played' && this.analysisHighlight.to === square) {
+          legalMarker = `<div class="played-target-ring"></div>`;
         }
 
         // Coordinates display
