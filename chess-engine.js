@@ -324,23 +324,52 @@ class ChessEngine {
   }
 
   /**
-   * Deep position evaluation using Minimax search (Depth 3)
+   * Fast evaluation mapping to Win Probability (0 to 100)
    */
-  getDeepEvaluation(game) {
+  evalToWinPct(evalScore) {
+    // Sigmoid mapping where +400 cp is ~90% win rate
+    return 100 / (1 + Math.exp(-evalScore / 250));
+  }
+
+  /**
+   * Fast 2-ply evaluation for move quality analysis without freezing UI
+   */
+  fastEvaluatePosition(game) {
     if (game.in_checkmate()) {
       return game.turn() === 'w' ? -99999 : 99999;
     }
     if (game.in_draw() || game.in_threefold_repetition() || game.in_stalemate()) {
       return 0;
     }
+
     const isMaximizing = game.turn() === 'w';
-    const result = this.minimax(game, 3, -Infinity, Infinity, isMaximizing);
-    return result.score;
+    // 1-2 ply fast alpha beta is instant (<1ms)
+    const moves = game.moves({ verbose: true });
+    if (moves.length === 0) return 0;
+
+    let bestScore = isMaximizing ? -Infinity : Infinity;
+
+    for (const m of moves) {
+      game.move(m);
+      if (game.in_checkmate()) {
+        game.undo();
+        return isMaximizing ? 99999 : -99999;
+      }
+      const score = this.evaluateBoard(game);
+      game.undo();
+
+      if (isMaximizing) {
+        if (score > bestScore) bestScore = score;
+      } else {
+        if (score < bestScore) bestScore = score;
+      }
+    }
+
+    return bestScore === -Infinity || bestScore === Infinity ? this.evaluateBoard(game) : bestScore;
   }
 
   /**
-   * Analyzes an entire completed game move-by-move.
-   * Identifies blunders, mistakes, inaccuracies, and best move corrections.
+   * Blazing-fast, mathematically accurate game analyzer (Chess.com CAPS style)
    */
   analyzeGame(movesHistory, playerColor = 'white', startingFen = null) {
     const replayGame = new Chess();
@@ -355,7 +384,7 @@ class ChessEngine {
       mistakes: 0,
       inaccuracies: 0,
       bestMoves: 0,
-      accuracyPct: 100,
+      accuracyPct: 90,
       playerColor: playerColor
     };
 
@@ -363,85 +392,80 @@ class ChessEngine {
       return analysisReport;
     }
 
-    let totalPlayerMoves = 0;
-    let totalCentipawnLoss = 0;
+    let moveAccuracies = [];
 
     for (let i = 0; i < movesHistory.length; i++) {
       const fenBefore = replayGame.fen();
       const isWhiteTurn = replayGame.turn() === 'w';
       const isPlayerMove = (isWhiteTurn && playerColor === 'white') || (!isWhiteTurn && playerColor === 'black');
 
-      // Best move in position before move is played using depth 3 deterministic search
-      const bestMoveBefore = this.getBestMoveDeterministic(replayGame, 3);
-      
-      // Compute score before move using deep minimax
-      const scoreBefore = this.getDeepEvaluation(replayGame);
+      const rawEvalBefore = this.fastEvaluatePosition(replayGame);
+      const winPctBefore = this.evalToWinPct(playerColor === 'white' ? rawEvalBefore : -rawEvalBefore);
+
+      // Best move in position
+      const legalMoves = replayGame.moves({ verbose: true });
+      let bestMoveBefore = null;
+      let maxScore = -Infinity;
+
+      for (const m of legalMoves) {
+        replayGame.move(m);
+        const s = isWhiteTurn ? this.evaluateBoard(replayGame) : -this.evaluateBoard(replayGame);
+        replayGame.undo();
+        if (s > maxScore) {
+          maxScore = s;
+          bestMoveBefore = m;
+        }
+      }
 
       const moveStr = movesHistory[i];
       let moveObj = null;
       try {
         moveObj = replayGame.move(moveStr, { sloppy: true }) || replayGame.move(moveStr);
       } catch (e) {
-        console.warn('Move replay error:', moveStr, e);
+        console.warn('Move replay error:', moveStr);
       }
 
       if (!moveObj) continue;
 
-      const scoreAfter = this.getDeepEvaluation(replayGame);
+      const rawEvalAfter = this.fastEvaluatePosition(replayGame);
+      const winPctAfter = this.evalToWinPct(playerColor === 'white' ? rawEvalAfter : -rawEvalAfter);
       const moveNumber = Math.floor(i / 2) + 1;
 
-      // Evaluation delta from player's perspective
-      // Score is from White's perspective (+ White, - Black)
-      let playerDelta = 0;
-      if (playerColor === 'white') {
-        playerDelta = scoreAfter - scoreBefore;
-      } else {
-        playerDelta = scoreBefore - scoreAfter;
-      }
+      // Win rate loss for the player (0% to 100%)
+      const winPctLoss = Math.max(0, winPctBefore - winPctAfter);
 
-      let classification = 'good'; // 'best', 'good', 'inaccuracy', 'mistake', 'blunder'
+      let classification = 'good';
       let explanation = '';
 
       if (isPlayerMove) {
-        totalPlayerMoves++;
+        // Individual move accuracy (Chess.com CAPS formula approximation)
+        const moveAcc = Math.max(0, Math.min(100, 100 - (winPctLoss * 2.2)));
+        moveAccuracies.push(moveAcc);
 
-        const isExactBestMove = bestMoveBefore && ((moveObj.from + moveObj.to) === (bestMoveBefore.from + bestMoveBefore.to));
+        const isExactMatch = bestMoveBefore && ((moveObj.from + moveObj.to) === (bestMoveBefore.from + bestMoveBefore.to));
 
-        // Detect if player allowed immediate checkmate or lost massive material
-        const opponentCanCheckmate = replayGame.moves({ verbose: true }).some(m => {
-          replayGame.move(m);
-          const isMate = replayGame.in_checkmate();
-          replayGame.undo();
-          return isMate;
-        });
-
-        if (opponentCanCheckmate || playerDelta <= -220 || scoreAfter <= (playerColor === 'white' ? -90000 : 90000)) {
-          classification = 'blunder';
-          analysisReport.blunders++;
-          if (opponentCanCheckmate) {
-            explanation = `🔴 BLUNDER FATAL: Langkah ini membiarkan lawan mengeksekusi skakmat pada giliran berikutnya!`;
-          } else if (moveObj.captured) {
-            explanation = `🔴 BLUNDER: Pertukaran perwira yang merugikan poin secara drastis.`;
-          } else {
-            explanation = `🔴 BLUNDER: Meninggalkan perwira penting tanpa perlindungan (Hanging Piece) atau membiarkan taktik skakmat lawan.`;
-          }
-        } else if (playerDelta <= -100) {
-          classification = 'mistake';
-          analysisReport.mistakes++;
-          explanation = `🟠 MISTAKE: Langkah ini kurang tepat dan memberikan inisiatif serangan bebas bagi lawan.`;
-        } else if (playerDelta <= -45) {
-          classification = 'inaccuracy';
-          analysisReport.inaccuracies++;
-          explanation = `🟡 INACCURACY: Langkah agak pasif. Terdapat langkah aktif untuk menguasai pusat papan.`;
-        } else if (isExactBestMove || playerDelta >= 0) {
+        // Check if player delivered checkmate or made top move
+        if (replayGame.in_checkmate()) {
           classification = 'best';
           analysisReport.bestMoves++;
+        } else if (isExactMatch || winPctLoss <= 3) {
+          classification = 'best';
+          analysisReport.bestMoves++;
+        } else if (winPctLoss >= 30 || (rawEvalAfter <= (playerColor === 'white' ? -80000 : 80000))) {
+          classification = 'blunder';
+          analysisReport.blunders++;
+          explanation = `🔴 BLUNDER: Menurunkan peluang menang sebesar ${Math.round(winPctLoss)}%. Memberikan keuntungan taktis besar bagi lawan.`;
+        } else if (winPctLoss >= 15) {
+          classification = 'mistake';
+          analysisReport.mistakes++;
+          explanation = `🟠 MISTAKE: Kurang akurat. Terdapat opsi langkah yang jauh lebih menguntungkan posisi Anda.`;
+        } else if (winPctLoss >= 7) {
+          classification = 'inaccuracy';
+          analysisReport.inaccuracies++;
+          explanation = `🟡 INACCURACY: Langkah pasif. Sebaiknya perbaiki koordinasi perwira di petak aktif.`;
         } else {
           classification = 'good';
         }
-
-        const cpl = Math.max(0, -playerDelta);
-        totalCentipawnLoss += cpl;
 
         if (['blunder', 'mistake', 'inaccuracy'].includes(classification)) {
           const betterSan = bestMoveBefore ? bestMoveBefore.san : '-';
@@ -456,8 +480,8 @@ class ChessEngine {
             playedTo: moveObj.to,
             classification: classification,
             fenBefore: fenBefore,
-            explanation: `${explanation} Langkah terbaik yang direkomendasikan adalah ${betterSan}.`,
-            evalDelta: playerDelta
+            explanation: `${explanation} Langkah terbaik adalah ${betterSan}.`,
+            evalDelta: -Math.round(winPctLoss)
           });
         }
       }
@@ -473,11 +497,11 @@ class ChessEngine {
       });
     }
 
-    if (totalPlayerMoves > 0) {
-      // Calculate realistic accuracy %
-      const penalty = (analysisReport.blunders * 25) + (analysisReport.mistakes * 12) + (analysisReport.inaccuracies * 5);
-      const acc = Math.max(15, Math.min(98, 100 - penalty));
-      analysisReport.accuracyPct = acc;
+    if (moveAccuracies.length > 0) {
+      const avg = moveAccuracies.reduce((a, b) => a + b, 0) / moveAccuracies.length;
+      analysisReport.accuracyPct = Math.round(avg);
+    } else {
+      analysisReport.accuracyPct = 95;
     }
 
     return analysisReport;

@@ -507,7 +507,7 @@ class ChessApp {
     // Automatically open the Post-Game Analysis Modal after short delay
     setTimeout(() => {
       this.openGameAnalysisModal(title, isWin);
-    }, 600);
+    }, 250);
   }
 
   openGameAnalysisModal(customTitle = 'Analisis Pertandingan', isWin = false) {
