@@ -150,49 +150,56 @@ class ChessEngine {
   }
 
   minimax(game, depth, alpha, beta, isMaximizing) {
+    return this.minimaxPV(game, depth, alpha, beta, isMaximizing);
+  }
+
+  minimaxPV(game, depth, alpha, beta, isMaximizing) {
     this.nodesEvaluated++;
 
     if (depth === 0 || game.game_over()) {
-      return { score: this.evaluateBoard(game) };
+      return { score: this.evaluateBoard(game), bestMove: null, pv: [] };
     }
 
     let moves = game.moves({ verbose: true });
     moves = this.orderMoves(game, moves);
+    if (moves.length === 0) {
+      return { score: this.evaluateBoard(game), bestMove: null, pv: [] };
+    }
 
     if (isMaximizing) {
       let maxEval = -Infinity;
-      let bestMove = null;
+      let bestPV = [];
 
       for (const move of moves) {
         game.move(move);
-        const evaluation = this.minimax(game, depth - 1, alpha, beta, false).score;
+        const child = this.minimaxPV(game, depth - 1, alpha, beta, false);
         game.undo();
 
-        if (evaluation > maxEval) {
-          maxEval = evaluation;
-          bestMove = move;
+        if (child.score > maxEval) {
+          maxEval = child.score;
+          bestPV = [move, ...(child.pv || [])];
         }
-        alpha = Math.max(alpha, evaluation);
+        alpha = Math.max(alpha, child.score);
         if (beta <= alpha) break;
       }
-      return { score: maxEval, bestMove };
+      return { score: maxEval, bestMove: bestPV[0] || moves[0], pv: bestPV };
     } else {
       let minEval = Infinity;
-      let bestMove = null;
+      let bestPV = [];
 
       for (const move of moves) {
         game.move(move);
-        const evaluation = this.minimax(game, depth - 1, alpha, beta, true).score;
+        const child = this.minimaxPV(game, depth - 1, alpha, beta, true);
         game.undo();
 
-        if (evaluation < minEval) {
-          minEval = evaluation;
-          bestMove = move;
+        if (child.score < minEval) {
+          minEval = child.score;
+          bestPV = [move, ...(child.pv || [])];
         }
-        beta = Math.min(beta, evaluation);
+        beta = Math.min(beta, child.score);
         if (beta <= alpha) break;
       }
-      return { score: minEval, bestMove };
+      return { score: minEval, bestMove: bestPV[0] || moves[0], pv: bestPV };
     }
   }
 
@@ -230,26 +237,26 @@ class ChessEngine {
       if (Math.random() < 0.25) {
         return moves[Math.floor(Math.random() * moves.length)];
       }
-      const result = this.minimax(game, 1, -Infinity, Infinity, isMaximizing);
+      const result = this.minimaxPV(game, 1, -Infinity, Infinity, isMaximizing);
       return result.bestMove || moves[0];
     }
 
     // Level 3: Medium (~1200 ELO) -> Depth 2
     if (difficulty === 3) {
-      const result = this.minimax(game, 2, -Infinity, Infinity, isMaximizing);
+      const result = this.minimaxPV(game, 2, -Infinity, Infinity, isMaximizing);
       return result.bestMove || moves[0];
     }
 
     // Level 4: Hard (~1500 ELO) -> Depth 3
     if (difficulty === 4) {
-      const result = this.minimax(game, 3, -Infinity, Infinity, isMaximizing);
+      const result = this.minimaxPV(game, 3, -Infinity, Infinity, isMaximizing);
       return result.bestMove || moves[0];
     }
 
     // Level 5: Master (~1800 ELO) -> Depth 3 or 4
     if (difficulty === 5) {
       const depth = moves.length > 28 ? 3 : 4;
-      const result = this.minimax(game, depth, -Infinity, Infinity, isMaximizing);
+      const result = this.minimaxPV(game, depth, -Infinity, Infinity, isMaximizing);
       return result.bestMove || moves[0];
     }
 
@@ -263,9 +270,6 @@ class ChessEngine {
   }
 
   /**
-   * Generates coach suggestion and plain explanation in Indonesian
-   */
-  /**
    * Deterministic best move calculator for Coach and Analysis (No randomness, deep minimax)
    */
   getBestMoveDeterministic(game, depth = 3) {
@@ -274,7 +278,7 @@ class ChessEngine {
     if (moves.length === 0) return null;
 
     const isMaximizing = game.turn() === 'w';
-    const result = this.minimax(game, depth, -Infinity, Infinity, isMaximizing);
+    const result = this.minimaxPV(game, depth, -Infinity, Infinity, isMaximizing);
     return result.bestMove || moves[0];
   }
 
@@ -327,7 +331,6 @@ class ChessEngine {
    * Fast evaluation mapping to Win Probability (0 to 100)
    */
   evalToWinPct(evalScore) {
-    // Sigmoid mapping where +400 cp is ~90% win rate
     return 100 / (1 + Math.exp(-evalScore / 250));
   }
 
@@ -343,7 +346,6 @@ class ChessEngine {
     }
 
     const isMaximizing = game.turn() === 'w';
-    // 1-2 ply fast alpha beta is instant (<1ms)
     const moves = game.moves({ verbose: true });
     if (moves.length === 0) return 0;
 
@@ -369,7 +371,7 @@ class ChessEngine {
   }
 
   /**
-   * Blazing-fast, mathematically accurate game analyzer (Chess.com CAPS style)
+   * High-Precision Game Analyzer with Multi-Move Continuation Lines (PV)
    */
   analyzeGame(movesHistory, playerColor = 'white', startingFen = null) {
     const replayGame = new Chess();
@@ -402,18 +404,57 @@ class ChessEngine {
       const rawEvalBefore = this.fastEvaluatePosition(replayGame);
       const winPctBefore = this.evalToWinPct(playerColor === 'white' ? rawEvalBefore : -rawEvalBefore);
 
-      // Best move in position
-      const legalMoves = replayGame.moves({ verbose: true });
+      // Deep 3-ply Minimax Search with Principal Variation (PV)
       let bestMoveBefore = null;
-      let maxScore = -Infinity;
+      let pvMoves = [];
+      let bestContinuationSteps = [];
+      let bestContinuationSAN = '';
 
-      for (const m of legalMoves) {
-        replayGame.move(m);
-        const s = isWhiteTurn ? this.evaluateBoard(replayGame) : -this.evaluateBoard(replayGame);
-        replayGame.undo();
-        if (s > maxScore) {
-          maxScore = s;
-          bestMoveBefore = m;
+      if (isPlayerMove) {
+        const searchRes = this.minimaxPV(replayGame, 3, -Infinity, Infinity, isWhiteTurn);
+        bestMoveBefore = searchRes.bestMove;
+        pvMoves = searchRes.pv || [];
+
+        // Build continuation steps for interactive review
+        if (pvMoves.length > 0) {
+          const simGame = new Chess(fenBefore);
+          bestContinuationSteps.push({
+            fen: fenBefore,
+            san: 'Posisi Saat Ini',
+            comment: 'Posisi sebelum Anda melangkah.',
+            from: null,
+            to: null
+          });
+
+          const sanList = [];
+          for (let pIdx = 0; pIdx < pvMoves.length; pIdx++) {
+            const pvMove = pvMoves[pIdx];
+            const simRes = simGame.move(pvMove);
+            if (simRes) {
+              const movePrefix = `${Math.floor((i + pIdx) / 2) + 1}${simGame.turn() === 'b' ? '.' : '...'}`;
+              sanList.push(`${movePrefix} ${simRes.san}`);
+              
+              let stepExplanation = '';
+              if (simRes.captured) {
+                stepExplanation = `Memakan perwira di ${simRes.to} untuk merebut keunggulan materi poin.`;
+              } else if (simRes.san.includes('+')) {
+                stepExplanation = `Memberi skak ke ${simRes.to} menekan Raja dan memaksa lawan bertahan.`;
+              } else if (pIdx === 0) {
+                stepExplanation = `Langkah terbaik yang mendominasi kontrol sentral dan menekan kelemahan lawan.`;
+              } else {
+                stepExplanation = `Langkah lanjutan terbaik untuk memaksimalkan keuntungan taktis posisi.`;
+              }
+
+              bestContinuationSteps.push({
+                fen: simGame.fen(),
+                san: `${movePrefix} ${simRes.san}`,
+                comment: stepExplanation,
+                from: simRes.from,
+                to: simRes.to
+              });
+            }
+          }
+          bestContinuationSAN = sanList.join(' ');
         }
       }
 
@@ -435,73 +476,91 @@ class ChessEngine {
       const winPctLoss = Math.max(0, winPctBefore - winPctAfter);
 
       let classification = 'good';
-      let explanation = '';
+      let whyBestIsBetter = '';
+      let whyPlayedIsBad = '';
 
       if (isPlayerMove) {
-        // Individual move accuracy (Chess.com CAPS formula approximation)
         const moveAcc = Math.max(0, Math.min(100, 100 - (winPctLoss * 2.2)));
         moveAccuracies.push(moveAcc);
 
         const isExactMatch = bestMoveBefore && ((moveObj.from + moveObj.to) === (bestMoveBefore.from + bestMoveBefore.to));
 
-        // Check if player delivered checkmate or made top move
         if (replayGame.in_checkmate()) {
           classification = 'best';
           analysisReport.bestMoves++;
-        } else if (isExactMatch || winPctLoss <= 3) {
+        } else if (isExactMatch || winPctLoss <= 4) {
           classification = 'best';
           analysisReport.bestMoves++;
-        } else if (winPctLoss >= 30 || (rawEvalAfter <= (playerColor === 'white' ? -80000 : 80000))) {
+        } else if (winPctLoss >= 25 || (rawEvalAfter <= (playerColor === 'white' ? -80000 : 80000))) {
           classification = 'blunder';
           analysisReport.blunders++;
-          explanation = `🔴 BLUNDER: Menurunkan peluang menang sebesar ${Math.round(winPctLoss)}%. Memberikan keuntungan taktis besar bagi lawan.`;
-        } else if (winPctLoss >= 15) {
+        } else if (winPctLoss >= 12) {
           classification = 'mistake';
           analysisReport.mistakes++;
-          explanation = `🟠 MISTAKE: Kurang akurat. Terdapat opsi langkah yang jauh lebih menguntungkan posisi Anda.`;
-        } else if (winPctLoss >= 7) {
+        } else if (winPctLoss >= 5) {
           classification = 'inaccuracy';
           analysisReport.inaccuracies++;
-          explanation = `🟡 INACCURACY: Langkah pasif. Sebaiknya perbaiki koordinasi perwira di petak aktif.`;
         } else {
           classification = 'good';
         }
 
-        if (['blunder', 'mistake', 'inaccuracy'].includes(classification)) {
-          const betterSan = bestMoveBefore ? bestMoveBefore.san : '-';
-          analysisReport.keyMoments.push({
-            plyIndex: i,
-            moveNumber: moveNumber,
-            playerMove: moveObj.san,
-            bestMove: betterSan,
-            bestMoveFrom: bestMoveBefore ? bestMoveBefore.from : null,
-            bestMoveTo: bestMoveBefore ? bestMoveBefore.to : null,
-            playedFrom: moveObj.from,
-            playedTo: moveObj.to,
-            classification: classification,
-            fenBefore: fenBefore,
-            explanation: `${explanation} Langkah terbaik adalah ${betterSan}.`,
-            evalDelta: -Math.round(winPctLoss)
-          });
+        // Generate contextual tactical reasoning
+        if (bestMoveBefore) {
+          if (bestMoveBefore.captured) {
+            whyBestIsBetter = `Saran langkah ${bestMoveBefore.san} langsung memakan bidak ${bestMoveBefore.to} dan memenangkan materi.`;
+          } else if (bestMoveBefore.san.includes('+')) {
+            whyBestIsBetter = `Saran langkah ${bestMoveBefore.san} memberikan skak tajam yang merusak formasi lawan.`;
+          } else {
+            whyBestIsBetter = `Saran langkah ${bestMoveBefore.san} memaksimalkan koordinasi perwira dan menekan titik lemah lawan.`;
+          }
+        }
+
+        if (moveObj.captured) {
+          whyPlayedIsBad = `Langkah ${moveObj.san} Anda memakan bidak, tetapi membiarkan lawan mendapatkan inisiatif serangan balik yang lebih berbahaya.`;
+        } else {
+          whyPlayedIsBad = `Langkah ${moveObj.san} Anda terlalu pasif dan melepaskan tekanan menguntungkan yang seharusnya bisa Anda manfaatkan.`;
         }
       }
 
-      analysisReport.positions.push({
+      const posData = {
         plyIndex: i,
         moveNumber: moveNumber,
         san: moveObj.san,
         fen: replayGame.fen(),
-        evalScore: this.getEvaluationScore(replayGame),
+        evalScore: Math.round(this.evalToWinPct(rawEvalAfter)),
         classification: classification,
         isPlayerMove: isPlayerMove
-      });
+      };
+      analysisReport.positions.push(posData);
+
+      if (isPlayerMove && ['blunder', 'mistake', 'inaccuracy'].includes(classification)) {
+        analysisReport.keyMoments.push({
+          plyIndex: i,
+          moveNumber: moveNumber,
+          fenBefore: fenBefore,
+          fenAfter: replayGame.fen(),
+          playerMove: moveObj.san,
+          playedFrom: moveObj.from,
+          playedTo: moveObj.to,
+          bestMove: bestMoveBefore ? bestMoveBefore.san : 'N/A',
+          bestMoveFrom: bestMoveBefore ? bestMoveBefore.from : null,
+          bestMoveTo: bestMoveBefore ? bestMoveBefore.to : null,
+          continuationSteps: bestContinuationSteps,
+          continuationSAN: bestContinuationSAN,
+          whyBestIsBetter: whyBestIsBetter,
+          whyPlayedIsBad: whyPlayedIsBad,
+          classification: classification,
+          winPctLoss: Math.round(winPctLoss),
+          evalBefore: Math.round(winPctBefore),
+          evalAfter: Math.round(winPctAfter)
+        });
+      }
     }
 
+    // Overall Accuracy
     if (moveAccuracies.length > 0) {
       const avg = moveAccuracies.reduce((a, b) => a + b, 0) / moveAccuracies.length;
       analysisReport.accuracyPct = Math.round(avg);
-    } else {
-      analysisReport.accuracyPct = 95;
     }
 
     return analysisReport;

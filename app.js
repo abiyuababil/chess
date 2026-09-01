@@ -530,10 +530,11 @@ class ChessApp {
     const momentsHtml = analysis.keyMoments.length > 0 ? analysis.keyMoments.map((km, idx) => {
       const badgeColor = km.classification === 'blunder' ? 'danger' : (km.classification === 'mistake' ? 'warning' : 'info');
       const badgeLabel = km.classification === 'blunder' ? 'BLUNDER' : (km.classification === 'mistake' ? 'MISTAKE' : 'INACCURACY');
+      const contPreview = km.continuationSAN ? `<div class="moment-cont-preview"><span>Lanjutan:</span> ${km.continuationSAN}</div>` : '';
       return `
         <div class="analysis-moment-card" id="moment-card-${idx}" onclick="window.chessApp.inspectAnalysisMoment(${idx})">
           <div class="moment-card-header">
-            <span class="moment-badge ${badgeColor}">${badgeLabel}</span>
+            <span class="moment-badge ${badgeColor}">${badgeLabel} (-${km.winPctLoss}%)</span>
             <span class="moment-move-num">Langkah ${km.moveNumber}</span>
           </div>
 
@@ -548,9 +549,10 @@ class ChessApp {
             </div>
           </div>
 
-          <p class="moment-desc">${km.explanation}</p>
+          <p class="moment-desc">${km.whyBestIsBetter || 'Saran langkah terbaik memberikan keunggulan posisi yang lebih tinggi.'}</p>
+          ${contPreview}
           <div class="moment-footer">
-            <span class="btn-inspect-link">Lihat di Papan →</span>
+            <span class="btn-inspect-link">Simulasikan di Papan →</span>
           </div>
         </div>
       `;
@@ -603,6 +605,19 @@ class ChessApp {
               <button class="btn-toggle-move active" id="btn-toggle-best" onclick="window.chessApp.previewAnalysisMove('best')">
                 Saran Terbaik (Hijau)
               </button>
+            </div>
+
+            <!-- Continuation Timeline Steps -->
+            <div id="analysis-continuation-panel" style="width:100%;display:none;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                <span style="font-size:11.5px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.5px;">
+                  Simulasi Langkah Lanjutan (Engine Line):
+                </span>
+                <button class="btn-sm-action" id="btn-analysis-autoplay" onclick="window.chessApp.toggleAnalysisAutoPlay()" style="font-size:11px;padding:3px 8px;">
+                  ▶ Putar Simulasi
+                </button>
+              </div>
+              <div class="rep-timeline-bar" id="analysis-pv-timeline"></div>
             </div>
 
             <!-- Step Navigation -->
@@ -660,6 +675,7 @@ class ChessApp {
     if (!this.lastAnalysis || !this.lastAnalysis.keyMoments[idx]) return;
     const km = this.lastAnalysis.keyMoments[idx];
     this.currentInspectedMoment = km;
+    this.analysisContinuationStep = 0;
 
     // Highlight active card
     document.querySelectorAll('.analysis-moment-card').forEach(c => c.classList.remove('active'));
@@ -674,11 +690,19 @@ class ChessApp {
     if (!this.currentInspectedMoment || !this.analysisBoard) return;
     const km = this.currentInspectedMoment;
 
-    // Set board to position before move
-    this.analysisBoard.setPosition(km.fenBefore);
+    // Stop auto-play if running
+    if (this.analysisAutoPlayInterval) {
+      clearInterval(this.analysisAutoPlayInterval);
+      this.analysisAutoPlayInterval = null;
+      const btn = document.getElementById('btn-analysis-autoplay');
+      if (btn) btn.innerText = '▶ Putar Simulasi';
+    }
 
     const btnPlayed = document.getElementById('btn-toggle-played');
     const btnBest = document.getElementById('btn-toggle-best');
+    const contPanel = document.getElementById('analysis-continuation-panel');
+    const pvTimeline = document.getElementById('analysis-pv-timeline');
+
     if (btnPlayed && btnBest) {
       if (type === 'played') {
         btnPlayed.classList.add('active');
@@ -690,12 +714,30 @@ class ChessApp {
     }
 
     if (type === 'played') {
+      if (contPanel) contPanel.style.display = 'none';
+      this.analysisBoard.setPosition(km.fenBefore);
       if (km.playedFrom && km.playedTo) {
         this.analysisBoard.setAnalysisHighlight(km.playedFrom, km.playedTo, 'played');
       }
     } else {
-      if (km.bestMoveFrom && km.bestMoveTo) {
-        this.analysisBoard.setAnalysisHighlight(km.bestMoveFrom, km.bestMoveTo, 'best');
+      // Best Move & Continuation Line
+      if (km.continuationSteps && km.continuationSteps.length > 1) {
+        if (contPanel) contPanel.style.display = 'block';
+        if (pvTimeline) {
+          pvTimeline.innerHTML = km.continuationSteps.map((st, sIdx) => `
+            <button class="rep-timeline-btn ${sIdx === 1 ? 'active' : ''}" id="pv-step-btn-${sIdx}" onclick="window.chessApp.stepContinuation(${sIdx})">
+              <span class="step-num">${sIdx === 0 ? 'Awal' : sIdx}</span>
+              <span class="step-san">${st.san}</span>
+            </button>
+          `).join('');
+        }
+        this.stepContinuation(1);
+      } else {
+        if (contPanel) contPanel.style.display = 'none';
+        this.analysisBoard.setPosition(km.fenBefore);
+        if (km.bestMoveFrom && km.bestMoveTo) {
+          this.analysisBoard.setAnalysisHighlight(km.bestMoveFrom, km.bestMoveTo, 'best');
+        }
       }
     }
 
@@ -706,15 +748,78 @@ class ChessApp {
     if (evalText) {
       const isBlunder = km.classification === 'blunder';
       const borderCol = isBlunder ? 'var(--danger)' : '#f97316';
-      const bgCol = isBlunder ? 'rgba(239,68,68,0.12)' : 'rgba(249,115,22,0.12)';
+      const bgCol = isBlunder ? 'rgba(239,68,68,0.1)' : 'rgba(249,115,22,0.1)';
       evalText.innerHTML = `
-        <div style="background:${bgCol};border:1px solid ${borderCol};padding:10px 14px;border-radius:8px;font-size:12.5px;line-height:1.4;">
-          <div style="font-weight:700;margin-bottom:4px;color:#fff;">
-            ${km.classification.toUpperCase()} • Anda memainkan <span style="color:#fca5a5;">${km.playerMove}</span> (Saran: <span style="color:#86efac;">${km.bestMove}</span>)
+        <div style="background:${bgCol};border:1px solid ${borderCol};padding:12px 14px;border-radius:8px;font-size:12.5px;line-height:1.5;">
+          <div style="font-weight:800;margin-bottom:6px;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:space-between;">
+            <span>${km.classification.toUpperCase()} (-${km.winPctLoss}% Winrate)</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted);">
+              Anda: <strong style="color:#fca5a5;">${km.playerMove}</strong> → Rekomendasi: <strong style="color:#86efac;">${km.bestMove}</strong>
+            </span>
           </div>
-          <div style="color:var(--text-muted);">${km.explanation}</div>
+          
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px;">
+            <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);padding:8px 10px;border-radius:6px;color:#d1fae5;">
+              <strong style="color:#86efac;">Kenapa Saran Terbaik Jauh Lebih Baik:</strong><br/>
+              ${km.whyBestIsBetter || 'Menguasai posisi dan menekan pertahanan lawan.'} ${km.continuationSAN ? `(Lanjutan PV: <em>${km.continuationSAN}</em>)` : ''}
+            </div>
+
+            <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);padding:8px 10px;border-radius:6px;color:#fee2e2;">
+              <strong style="color:#fca5a5;">Kenapa Langkah Anda Kurang Tepat:</strong><br/>
+              ${km.whyPlayedIsBad || 'Melepaskan tempo berharga dan memberikan lawan ruang bernapas.'}
+            </div>
+          </div>
         </div>
       `;
+    }
+  }
+
+  stepContinuation(stepIdx) {
+    if (!this.currentInspectedMoment || !this.currentInspectedMoment.continuationSteps) return;
+    const steps = this.currentInspectedMoment.continuationSteps;
+    if (stepIdx < 0) stepIdx = 0;
+    if (stepIdx >= steps.length) stepIdx = steps.length - 1;
+
+    this.analysisContinuationStep = stepIdx;
+    const st = steps[stepIdx];
+
+    if (this.analysisBoard) {
+      this.analysisBoard.setPosition(st.fen);
+      this.analysisBoard.clearAnalysisHighlight();
+
+      if (st.from && st.to) {
+        this.analysisBoard.setAnalysisHighlight(st.from, st.to, 'best');
+      }
+
+      // Update active timeline pill
+      document.querySelectorAll('#analysis-pv-timeline .rep-timeline-btn').forEach((b, idx) => {
+        if (idx === stepIdx) b.classList.add('active');
+        else b.classList.remove('active');
+      });
+    }
+  }
+
+  toggleAnalysisAutoPlay() {
+    const btn = document.getElementById('btn-analysis-autoplay');
+    if (this.analysisAutoPlayInterval) {
+      clearInterval(this.analysisAutoPlayInterval);
+      this.analysisAutoPlayInterval = null;
+      if (btn) btn.innerText = '▶ Putar Simulasi';
+    } else {
+      if (!this.currentInspectedMoment || !this.currentInspectedMoment.continuationSteps) return;
+      const steps = this.currentInspectedMoment.continuationSteps;
+      if (btn) btn.innerText = '⏸ Jeda';
+
+      this.analysisAutoPlayInterval = setInterval(() => {
+        let next = this.analysisContinuationStep + 1;
+        if (next >= steps.length) {
+          clearInterval(this.analysisAutoPlayInterval);
+          this.analysisAutoPlayInterval = null;
+          if (btn) btn.innerText = '▶ Putar Ulang';
+        } else {
+          this.stepContinuation(next);
+        }
+      }, 1200);
     }
   }
 
@@ -746,12 +851,17 @@ class ChessApp {
   }
 
   closeAnalysisModal() {
+    if (this.analysisAutoPlayInterval) {
+      clearInterval(this.analysisAutoPlayInterval);
+      this.analysisAutoPlayInterval = null;
+    }
     const modal = document.getElementById('game-analysis-modal');
     if (modal) {
       document.body.removeChild(modal);
     }
     this.analysisBoard = null;
     this.lastAnalysis = null;
+    this.currentInspectedMoment = null;
   }
 
   newGame(color = 'white') {
