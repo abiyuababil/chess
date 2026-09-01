@@ -265,11 +265,24 @@ class ChessEngine {
   /**
    * Generates coach suggestion and plain explanation in Indonesian
    */
+  /**
+   * Deterministic best move calculator for Coach and Analysis (No randomness, deep minimax)
+   */
+  getBestMoveDeterministic(game, depth = 3) {
+    this.nodesEvaluated = 0;
+    const moves = game.moves({ verbose: true });
+    if (moves.length === 0) return null;
+
+    const isMaximizing = game.turn() === 'w';
+    const result = this.minimax(game, depth, -Infinity, Infinity, isMaximizing);
+    return result.bestMove || moves[0];
+  }
+
   getCoachAdvice(game) {
     if (game.game_over()) return null;
 
-    // Use depth 3 or 4 for accurate coach recommendation
-    const bestMove = this.getBestMove(game, 4);
+    // Use deterministic depth 3 search
+    const bestMove = this.getBestMoveDeterministic(game, 3);
     if (!bestMove) return null;
 
     const pieceNames = {
@@ -311,7 +324,7 @@ class ChessEngine {
   }
 
   /**
-   * Deep position evaluation using Minimax search (Depth 2)
+   * Deep position evaluation using Minimax search (Depth 3)
    */
   getDeepEvaluation(game) {
     if (game.in_checkmate()) {
@@ -321,7 +334,7 @@ class ChessEngine {
       return 0;
     }
     const isMaximizing = game.turn() === 'w';
-    const result = this.minimax(game, 2, -Infinity, Infinity, isMaximizing);
+    const result = this.minimax(game, 3, -Infinity, Infinity, isMaximizing);
     return result.score;
   }
 
@@ -358,8 +371,8 @@ class ChessEngine {
       const isWhiteTurn = replayGame.turn() === 'w';
       const isPlayerMove = (isWhiteTurn && playerColor === 'white') || (!isWhiteTurn && playerColor === 'black');
 
-      // Best move in position before move is played
-      const bestMoveBefore = this.getBestMove(replayGame, 2);
+      // Best move in position before move is played using depth 3 deterministic search
+      const bestMoveBefore = this.getBestMoveDeterministic(replayGame, 3);
       
       // Compute score before move using deep minimax
       const scoreBefore = this.getDeepEvaluation(replayGame);
