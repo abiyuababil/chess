@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>ChessMastery ♟️ — 2-Day Chess Crash Course & Bot Sparring</title>
+  <meta name="description" content="Kuasai catur dari nol dalam 2 hari dengan roadmap terstruktur, latihan taktik, dan sparring lawan Bot AI dengan 5 tingkat kesulitan.">
+  <meta name="theme-color" content="#080c16">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,900;1,600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- chess.js library via CDN for game rules & move validation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Top Mobile Header -->
+    <header class="mobile-top-bar">
+      <div class="brand-mobile">
+        <span class="brand-icon">♔</span>
+        <span class="brand-title">ChessMastery</span>
+      </div>
+      <div class="mobile-streak-badge">
+        🔥 <span id="mobile-streak-val">1d</span>
+      </div>
+    </header>
+
+    <!-- Sidebar Navigation (Desktop) -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">♔</div>
+        <div class="brand-info">
+          <h1>ChessMastery</h1>
+          <span class="brand-badge">2-Day Mastery</span>
+        </div>
+      </div>
+
+      <ul class="nav-links">
+        <div class="nav-section-title">Overview</div>
+        <li class="nav-item active">
+          <a href="#dashboard">
+            <span class="nav-icon">📊</span>
+            <span>Dashboard</span>
+          </a>
+        </li>
+
+        <div class="nav-section-title">2-Day Crash Course</div>
+        <li class="nav-item">
+          <a href="#day1">
+            <span class="nav-icon">⚔️</span>
+            <span>Day 1: Fondasi & Taktik</span>
+            <span class="nav-tag">8 Pelajaran</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#day2">
+            <span class="nav-icon">👑</span>
+            <span>Day 2: Strategi & Endgame</span>
+            <span class="nav-tag">8 Pelajaran</span>
+          </a>
+        </li>
+
+        <div class="nav-section-title">Practice & Arena</div>
+        <li class="nav-item">
+          <a href="#play">
+            <span class="nav-icon">🤖</span>
+            <span>Play vs Bot</span>
+            <span class="nav-tag" style="background:rgba(16,185,129,0.15);color:var(--primary);">5 Levels</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#tactics">
+            <span class="nav-icon">🧩</span>
+            <span>Tactics Lab</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#repertoire">
+            <span class="nav-icon">📖</span>
+            <span>Repertoire</span>
+          </a>
+        </li>
+      </ul>
+
+      <div class="sidebar-footer">
+        <div class="user-quick-progress">
+          <div class="progress-header">
+            <span>Overall Progress</span>
+            <strong id="sidebar-progress-text">0% Selesai</strong>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="sidebar-progress-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Dynamic Content -->
+    <main class="main-content">
+      
+      <!-- =========================================================================
+           1. DASHBOARD VIEW
+           ========================================================================= -->
+      <section id="view-dashboard" class="view-section active">
+        <div class="section-header">
+          <div>
+            <h2>Dashboard Pelatihan Catur</h2>
+            <p>Target: Kuasai dasar catur, taktik mematikan, dan strategi solid dalam 2 hari!</p>
+          </div>
+        </div>
+
+        <!-- Quick Stats Grid -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon green">🎯</div>
+            <div class="stat-info">
+              <h4>Progress Crash Course</h4>
+              <div class="stat-value" id="dash-course-pct">0%</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon gold">🔥</div>
+            <div class="stat-info">
+              <h4>Active Streak</h4>
+              <div class="stat-value" id="dash-streak-count">1 Hari</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon blue">🧩</div>
+            <div class="stat-info">
+              <h4>Tactics Solved</h4>
+              <div class="stat-value" id="dash-puzzles-count">0</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon purple">🤖</div>
+            <div class="stat-info">
+              <h4>Win Rate vs Bot</h4>
+              <div class="stat-value" id="dash-win-rate">0% (0 Game)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2-Column Dashboard Breakdown -->
+        <div class="dash-columns">
+          <div class="dash-col-left">
+            <div class="dash-card">
+              <div class="dash-card-header">
+                <h3>🗓️ 2-Day Roadmap Summary</h3>
+              </div>
+              <div class="roadmap-overview">
+                <!-- Day 1 Card -->
+                <div class="roadmap-day-card">
+                  <div class="day-badge">Hari 1 • Taktik & Serangan</div>
+                  <h4>Lethal Attacks & Master Tactics</h4>
+                  <p>Greek Gift (Bxh7+), Zwischenzug, Pin & Win, Overloaded Pieces, dan jebakan Fried Liver.</p>
+                  <div class="progress-bar-bg" style="margin-bottom:12px;">
+                    <div class="progress-bar-fill" id="dash-day1-bar" style="width: 0%;"></div>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:12px;color:var(--text-muted);" id="dash-day1-text">0/8 Selesai</span>
+                    <a href="#day1" class="btn-sm-action">Mulai Hari 1 →</a>
+                  </div>
+                </div>
+
+                <!-- Day 2 Card -->
+                <div class="roadmap-day-card day2">
+                  <div class="day-badge">Hari 2 • Posisi & Endgame</div>
+                  <h4>Profilaksis, Struktur Pion & Lucena</h4>
+                  <p>Berpikir profilaksis ala Karpov, pawn breaks, outposts abadi, Sicilian & London, dan Lucena Bridge.</p>
+                  <div class="progress-bar-bg" style="margin-bottom:12px;">
+                    <div class="progress-bar-fill" id="dash-day2-bar" style="width: 0%;background:linear-gradient(90deg,var(--accent-gold),#f97316);"></div>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:12px;color:var(--text-muted);" id="dash-day2-text">0/8 Selesai</span>
+                    <a href="#day2" class="btn-sm-action">Mulai Hari 2 →</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Training Tips -->
+            <div class="dash-card">
+              <div class="dash-card-header">
+                <h3>⚡ Rekomendasi Latihan 2 Hari</h3>
+              </div>
+              <ul style="list-style:none;display:flex;flex-direction:column;gap:12px;">
+                <li style="display:flex;gap:12px;font-size:14px;color:var(--text-muted);">
+                  <span style="color:var(--primary);font-weight:700;">1.</span>
+                  <span>Selesaikan <strong>Lessons Day 1</strong> untuk mengasah insting kombinasi serangan pengorbanan dan jebakan pembukaan.</span>
+                </li>
+                <li style="display:flex;gap:12px;font-size:14px;color:var(--text-muted);">
+                  <span style="color:var(--primary);font-weight:700;">2.</span>
+                  <span>Kuasai <strong>Lessons Day 2</strong> tentang pencegahan rencana lawan (profilaksis) dan teknik Lucena Endgame.</span>
+                </li>
+                <li style="display:flex;gap:12px;font-size:14px;color:var(--text-muted);">
+                  <span style="color:var(--primary);font-weight:700;">3.</span>
+                  <span>Tantang <strong>Bot Level 3, 4, & 5</strong> di tab Play vs Bot, dan gunakan tombol <em>AI Coach</em> saat membutuhkan second opinion!</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="dash-col-right">
+            <!-- GM Quote Card -->
+            <div class="quote-card">
+              <div class="quote-icon">❝</div>
+              <div class="quote-text" id="dash-quote-text">"Tactics is knowing what to do when there is something to do; strategy is knowing what to do when there is nothing to do."</div>
+              <div class="quote-author" id="dash-quote-author">— Savielly Tartakower</div>
+            </div>
+
+            <!-- Quick Sparring CTA -->
+            <div class="dash-card" style="margin-top:24px;text-align:center;">
+              <h3 style="justify-content:center;margin-bottom:8px;">⚔️ Siap Bertanding?</h3>
+              <p style="font-size:13px;color:var(--text-muted);margin-bottom:18px;">Uji pemahaman Anda dengan sparring langsung melawan Bot Minimax AI.</p>
+              <a href="#play" class="btn-game-action primary" style="display:inline-flex;width:100%;">Mulai Main Lawan Bot 🤖</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =========================================================================
+           2. DAY 1 LESSONS VIEW
+           ========================================================================= -->
+      <section id="view-day1" class="view-section">
+        <div class="section-header">
+          <div>
+            <h2>⚔️ Hari 1: Master-Level Tactics & Lethal Sacrifices</h2>
+            <p>8 Pelajaran taktik menyerang, pengorbanan perwira mematikan, dan jebakan pembukaan agresif.</p>
+          </div>
+        </div>
+        <div class="lessons-list-grid" id="day1"></div>
+      </section>
+
+      <!-- =========================================================================
+           3. DAY 2 LESSONS VIEW
+           ========================================================================= -->
+      <section id="view-day2" class="view-section">
+        <div class="section-header">
+          <div>
+            <h2>👑 Hari 2: Positional Mastery, Prophylaxis & Deep Endgame</h2>
+            <p>8 Pelajaran strategi Grandmaster: profilaksis Karpov, struktur rantai pion, outposts, dan teknik jembatan Lucena.</p>
+          </div>
+        </div>
+        <div class="lessons-list-grid" id="day2"></div>
+      </section>
+
+      <!-- =========================================================================
+           4. PLAY VS BOT VIEW
+           ========================================================================= -->
+      <section id="view-play" class="view-section">
+        <div class="section-header">
+          <div>
+            <h2>🤖 Sparring Lawan Bot AI</h2>
+            <p>Pilih tingkat kesulitan dari Pemula hingga Master, dan latih taktik Anda!</p>
+          </div>
+        </div>
+
+        <div class="play-layout">
+          <!-- Chessboard + Eval Bar Area -->
+          <div class="board-area">
+            <div class="eval-bar-wrapper" title="Evaluation Bar">
+              <div class="eval-bar-white" id="eval-bar-white" style="height: 50%;"></div>
+              <span class="eval-score-text" id="eval-score-text">50%</span>
+            </div>
+            <div id="play-board-container"></div>
+          </div>
+
+          <!-- Controls & Game Information -->
+          <div class="game-controls-panel">
+            <!-- Bot Status Profile -->
+            <div class="bot-profile">
+              <div class="bot-avatar">🤖</div>
+              <div class="bot-meta">
+                <h4>StockBot AI</h4>
+                <div class="bot-difficulty-tag" id="bot-difficulty-display">Level 2: Easy (~800)</div>
+              </div>
+            </div>
+
+            <!-- Difficulty Selector -->
+            <div class="difficulty-selector">
+              <label>Pilih Tingkat Kesulitan Bot:</label>
+              <div class="difficulty-btn-group">
+                <button class="diff-btn" data-level="1">1 (400)</button>
+                <button class="diff-btn active" data-level="2">2 (800)</button>
+                <button class="diff-btn" data-level="3">3 (1200)</button>
+                <button class="diff-btn" data-level="4">4 (1500)</button>
+                <button class="diff-btn" data-level="5">5 (1800)</button>
+              </div>
+            </div>
+
+            <!-- Captured Pieces -->
+            <div class="captured-box">
+              <div class="captured-row">
+                <span class="captured-label">Hitam:</span>
+                <div id="captured-by-white" class="captured-list"></div>
+              </div>
+              <div class="captured-row">
+                <span class="captured-label">Putih:</span>
+                <div id="captured-by-black" class="captured-list"></div>
+              </div>
+            </div>
+
+            <!-- Move History -->
+            <div>
+              <label style="font-size:12px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:6px;">Notasi Langkah:</label>
+              <div class="move-history-container" id="move-history-list">
+                <div style="color:var(--text-dim);font-style:italic;padding:4px;">Belum ada langkah</div>
+              </div>
+            </div>
+
+            <!-- Coach Advice Banner -->
+            <div class="coach-card" id="coach-card-panel">
+              <div class="coach-header">
+                <span class="coach-icon">🧠</span>
+                <span class="coach-title">AI Chess Coach (Asisten Pelatih)</span>
+                <button class="btn-coach-hint" id="btn-coach-hint" onclick="window.chessApp.getCoachAdvice()">💡 Minta Saran</button>
+              </div>
+              <div class="coach-body" id="coach-advice-text">
+                Tekan <strong>"💡 Minta Saran"</strong> jika bingung harus melangkah ke mana. Pelatih akan merekomendasikan langkah terbaik beserta penjelasannya!
+              </div>
+            </div>
+
+            <!-- Status Banner -->
+            <div id="game-status-text" style="font-size:13px;color:var(--accent-gold);font-weight:600;min-height:20px;">
+              Giliran Putih melangkah
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="game-actions-row">
+              <button class="btn-game-action primary" onclick="window.chessApp.newGame('white')">Main Putih</button>
+              <button class="btn-game-action" onclick="window.chessApp.newGame('black')">Main Hitam</button>
+              <button class="btn-game-action" onclick="window.chessApp.undoMove()">Undo ↩</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =========================================================================
+           5. TACTICS LAB VIEW
+           ========================================================================= -->
+      <section id="view-tactics" class="view-section">
+        <div class="section-header">
+          <div>
+            <h2>🧩 Tactics Lab (Latihan Taktik)</h2>
+            <p>Pecahkan puzzle taktik untuk melatih ketajaman visual dan kalkulasi Anda.</p>
+          </div>
+        </div>
+
+        <div class="tactics-layout">
+          <div id="tactics-board-container"></div>
+
+          <div class="tactics-panel">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <h3 id="puzzle-title" style="font-size:20px;color:#fff;">Puzzle #1</h3>
+              <div style="display:flex;gap:8px;">
+                <span class="eco-badge" id="puzzle-motif-badge">Fork</span>
+                <span class="nav-tag" id="puzzle-rating-badge">Rating ~600</span>
+              </div>
+            </div>
+
+            <p id="puzzle-instruction" style="font-size:14px;color:var(--text-muted);">
+              Temukan langkah terbaik untuk memenangkan keunggulan!
+            </p>
+
+            <div class="puzzle-feedback" id="puzzle-feedback-box"></div>
+
+            <div style="display:flex;gap:12px;margin-top:auto;">
+              <button class="btn-game-action" onclick="window.chessApp.showPuzzleHint()">💡 Petunjuk (Hint)</button>
+              <button class="btn-game-action primary" onclick="window.chessApp.nextPuzzle()">Puzzle Berikutnya →</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =========================================================================
+           6. REPERTOIRE VIEW
+           ========================================================================= -->
+      <section id="view-repertoire" class="view-section">
+        <div class="section-header">
+          <div>
+            <h2>📖 Opening Repertoire Solid</h2>
+            <p>Pilihan pembukaan rekomendasi praktis untuk langsung siap bertanding.</p>
+          </div>
+        </div>
+        <div class="repertoire-grid" id="repertoire-grid-container"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Mobile Bottom Navigation Bar (Thumb Friendly) -->
+  <nav class="mobile-bottom-nav">
+    <a href="#dashboard" class="mobile-nav-item active">
+      <span class="mobile-nav-icon">📊</span>
+      <span class="mobile-nav-label">Home</span>
+    </a>
+    <a href="#day1" class="mobile-nav-item">
+      <span class="mobile-nav-icon">⚔️</span>
+      <span class="mobile-nav-label">Day 1</span>
+    </a>
+    <a href="#day2" class="mobile-nav-item">
+      <span class="mobile-nav-icon">👑</span>
+      <span class="mobile-nav-label">Day 2</span>
+    </a>
+    <a href="#play" class="mobile-nav-item">
+      <span class="mobile-nav-icon">🤖</span>
+      <span class="mobile-nav-label">Play Bot</span>
+    </a>
+    <a href="#tactics" class="mobile-nav-item">
+      <span class="mobile-nav-icon">🧩</span>
+      <span class="mobile-nav-label">Tactics</span>
+    </a>
+    <a href="#repertoire" class="mobile-nav-item">
+      <span class="mobile-nav-icon">📖</span>
+      <span class="mobile-nav-label">Repertoire</span>
+    </a>
+  </nav>
+
+  <!-- Application Scripts in Dependency Order -->
+  <script src="chess-engine.js"></script>
+  <script src="lessons.js"></script>
+  <script src="board.js"></script>
+  <script src="app.js"></script>
+
+</body>
+</html>
