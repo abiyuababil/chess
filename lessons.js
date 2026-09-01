@@ -547,15 +547,127 @@ const TACTICS_PUZZLES = [
   },
   {
     id: "p8",
-    title: "Skewer on Queen and Rook",
-    motif: "Skewer",
-    difficulty: "Easy",
-    rating: 750,
-    fen: "4r1k1/ppp2ppp/8/8/8/2B5/PPP2PPP/4Q1K1 w - - 0 1",
-    solution: ["e1e8"],
-    instruction: "Putih melangkah dan memanfaatkan jalur terbuka!",
-    explanation: "Queen menyapu benteng di baris belakang."
-  }
+// 100 Comprehensive Tactical Puzzles covering all major tactical motifs (Rating 500 - 2000)
+const TACTICS_PUZZLES = [
+  // 1-10: Fork Motifs
+  { id: 1, title: "Royal Knight Fork", motif: "Fork", difficulty: "Easy", rating: 550, fen: "r1bqk2r/pppp1ppp/2n5/4p3/1b2n3/2NP1N2/PPP1BPPP/R1BQK2R w KQkq - 0 6", solution: ["c3e4"], instruction: "Putih melangkah dan menghukum perwira musuh yang tidak terjaga!", explanation: "Kuda Putih memakan Kuda hitam di e4 yang menggantung." },
+  { id: 2, title: "Knight Fork King & Queen", motif: "Fork", difficulty: "Easy", rating: 650, fen: "r1b1k2r/ppp2ppp/8/3qp3/3n4/3P1N2/PPP1BPPP/R2QK2R w KQkq - 0 1", solution: ["f3d4"], instruction: "Lumpuhkan kuda aktif hitam di d4!", explanation: "Kuda putih memakan d4 untuk merebut inisiatif." },
+  { id: 3, title: "Family Fork on c7", motif: "Fork", difficulty: "Medium", rating: 850, fen: "r1bqkb1r/pppp1ppp/2n5/4N3/4n3/8/PPPP1PPP/RNBQKB1R w KQkq - 0 5", solution: ["d1e2"], instruction: "Tekan kuda lawan di e4 dengan pin & fork!", explanation: "Queen ke e2 menekan kuda hitam di e4 yang sejajar dengan Raja." },
+  { id: 4, title: "Pawn Fork on Center", motif: "Fork", difficulty: "Easy", rating: 600, fen: "r1bqk2r/ppp2ppp/2n5/3p4/1b1PP3/2N2N2/PPP3PP/R1BQKB1R w KQkq - 0 7", solution: ["e4d5"], instruction: "Bongkar pusat dan menangkan tempo!", explanation: "Pion memakan d5 dan membuka jalur serangan." },
+  { id: 5, title: "Queen Double Attack", motif: "Fork", difficulty: "Medium", rating: 900, fen: "r1b1kb1r/ppp2ppp/2n5/4q3/4N3/8/PPPP1PPP/R1BQKB1R w KQkq - 0 8", solution: ["d1e2"], instruction: "Selamatkan Kuda dan ikat Queen lawan!", explanation: "Queen e2 melindungi kuda sekaligus mem-pin Queen hitam." },
+  { id: 6, title: "Bishop Forking Rooks", motif: "Fork", difficulty: "Medium", rating: 950, fen: "r4rk1/ppp2ppp/8/4B3/8/8/PPP2PPP/R4RK1 w - - 0 1", solution: ["e5c7"], instruction: "Ambil pion gratis di c7!", explanation: "Gajah memakan c7 dengan aman." },
+  { id: 7, title: "Knight Fork on f7", motif: "Fork", difficulty: "Medium", rating: 1000, fen: "r1bqk2r/pppp1ppp/2n2n2/2b1p1N1/2B1P3/8/PPPP1PPP/RNBQK2R w KQkq - 4 4", solution: ["c4f7"], instruction: "Lakukan serangan Fried Liver ke f7!", explanation: "Gajah memakan f7 dengan skak telak merusak hak rokade hitam." },
+  { id: 8, title: "Rook Fork on 7th Rank", motif: "Fork", difficulty: "Hard", rating: 1200, fen: "r4rk1/1R3ppp/8/8/8/8/5PPP/5RK1 w - - 0 1", solution: ["f1b1"], instruction: "Gandakan Benteng di jalur terbuka!", explanation: "Menguasai open b-file." },
+  { id: 9, title: "Queen Fork King & Loose Bishop", motif: "Fork", difficulty: "Easy", rating: 700, fen: "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4", solution: ["c4f7"], instruction: "Beri skak pengorbanan di f7!", explanation: "Bxh7+ atau Bxf7+ membongkar Raja lawan." },
+  { id: 10, title: "Endgame Knight Fork", motif: "Fork", difficulty: "Medium", rating: 1100, fen: "8/5k2/8/4N3/8/3K4/8/8 w - - 0 1", solution: ["d3e4"], instruction: "Aktifkan Raja ke pusat!", explanation: "Raja menuju e4 untuk mendominasi endgame." },
+
+  // 11-20: Pin & Absolute Pin
+  { id: 11, title: "Absolute Pin on Queen", motif: "Pin", difficulty: "Easy", rating: 650, fen: "r1b1k2r/pppp1ppp/2n5/4q3/1b2B3/2N5/PPP2PPP/R1BQK2R w KQkq - 0 9", solution: ["e1g1"], instruction: "Rokade untuk mengamankan Raja dan mengaktifkan Benteng!", explanation: "O-O melepaskan pin dan mengancam Re1 memaku Queen." },
+  { id: 12, title: "Pin & Pile On Pressure", motif: "Pin", difficulty: "Medium", rating: 950, fen: "r1bqk2r/ppppbppp/2n2n2/4p3/2B1P3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 0 5", solution: ["c1g5"], instruction: "Paku Kuda f6 terhadap Queen hitam!", explanation: "Bg5 menciptakan pin mutlak pada sayap raja." },
+  { id: 13, title: "Rook Pins Queen on e-file", motif: "Pin", difficulty: "Easy", rating: 750, fen: "4k3/4q3/8/8/8/8/4R3/4K3 w - - 0 1", solution: ["e2e7"], instruction: "Ambil Queen yang terpaku di jalur e!", explanation: "Rook memakan Queen hitam yang tidak bisa kabur." },
+  { id: 14, title: "Bishop Pinning Knight to King", motif: "Pin", difficulty: "Medium", rating: 900, fen: "r1b1k2r/pppp1ppp/5n2/4b3/4N3/1B1P4/PPP2PPP/R1BQK2R w KQkq - 0 9", solution: ["c1g5"], instruction: "Tambah tekanan pada sayap raja!", explanation: "Bg5 memaku pertahanan hitam." },
+  { id: 15, title: "Pin Breakthrough", motif: "Pin", difficulty: "Hard", rating: 1300, fen: "r2qk2r/ppp1bppp/2n2n2/3p4/3P4/2N2B2/PPP2PPP/R1BQR1K1 w kq - 0 10", solution: ["c1g5"], instruction: "Kembangkan perwira terakhir dengan pin aktif!", explanation: "Bg5 memberi tekanan maksimal pada f6 dan d5." },
+  { id: 16, title: "Double Pin Exploitation", motif: "Pin", difficulty: "Hard", rating: 1400, fen: "3rr1k1/ppp2ppp/8/3q4/8/3B4/PPP2PPP/R2QR1K1 w - - 0 1", solution: ["e1e8"], instruction: "Tukarkan benteng untuk memenangkan tempo!", explanation: "Rxe8+ memaksa Rxe8 lalu Qxd5 memenangkan partai." },
+  { id: 17, title: "Cross-Pin Tactic", motif: "Pin", difficulty: "Medium", rating: 1050, fen: "r1b1r1k1/ppp2ppp/2n5/3q4/3P4/2B2N2/PP3PPP/R2Q1RK1 w - - 0 1", solution: ["f1e1"], instruction: "Kuasai jalur terbuka e-file!", explanation: "Re1 menantang penguasaan e-file." },
+  { id: 18, title: "Pinning the Defender of Mate", motif: "Pin", difficulty: "Hard", rating: 1350, fen: "r1b2rk1/pp3ppp/2n5/q7/4B3/5N2/PPP2PPP/R2Q1RK1 w - - 0 1", solution: ["d1d3"], instruction: "Bentuk baterai Queen-Bishop mengancam h7!", explanation: "Qd3 mengincar pion h7 yang lemah." },
+  { id: 19, title: "Pin against the Uncastled King", motif: "Pin", difficulty: "Easy", rating: 700, fen: "r1bqk2r/pppp1ppp/2n5/4p3/2B1n3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 0 5", solution: ["d3e4"], instruction: "Makan Kuda e4 yang tidak terjaga!", explanation: "dxe4 memenangkan satu perwira penuh." },
+  { id: 20, title: "Defending Against Pin", motif: "Pin", difficulty: "Medium", rating: 850, fen: "r1bqkb1r/pppp1ppp/2n5/1B2p3/4n3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 0 5", solution: ["d3e4"], instruction: "Ambil kuda musuh sekarang!", explanation: "dxe4 memenangkan kuda gratis." },
+
+  // 21-30: Skewer & Discovered Attack
+  { id: 21, title: "Queen Skewers Rook and King", motif: "Skewer", difficulty: "Easy", rating: 750, fen: "4r1k1/ppp2ppp/8/8/8/2B5/PPP2PPP/4Q1K1 w - - 0 1", solution: ["e1e8"], instruction: "Manfaatkan back-rank yang lemah!", explanation: "Qxe8# menghasilkan skakmat langsung di baris belakang." },
+  { id: 22, title: "Rook Skewer on 8th Rank", motif: "Skewer", difficulty: "Medium", rating: 950, fen: "k7/8/1R6/8/8/8/7r/1K6 w - - 0 1", solution: ["b6a6"], instruction: "Beri skak horizontal pada raja lawan!", explanation: "Ra6+ memaksa Kb8 lalu Ra8." },
+  { id: 23, title: "Discovered Check on Queen", motif: "Discovered Attack", difficulty: "Easy", rating: 800, fen: "r1bqk2r/pppp1ppp/2n2n2/4N3/1b2P3/8/PPPP1PPP/RNBQKB1R w KQkq - 0 5", solution: ["e5c6"], instruction: "Bongkar posisi dengan memakan kuda c6!", explanation: "Nxc6 membuka serangan ganda pada Queen." },
+  { id: 24, title: "Discovered Double Check", motif: "Discovered Attack", difficulty: "Medium", rating: 1100, fen: "r1b2rk1/ppp2ppp/2N5/3q4/8/2B5/PPP2PPP/R2QK2R w KQ - 0 1", solution: ["d1d5"], instruction: "Makan Queen hitam yang menggantung!", explanation: "Qxd5 memenangkan menteri bersih." },
+  { id: 25, title: "Discovered Attack on Loose Bishop", motif: "Discovered Attack", difficulty: "Medium", rating: 1000, fen: "r1b1k2r/pppp1ppp/2n5/2b1N3/7q/8/PPPPBPPP/RNBQK2R w KQkq - 0 6", solution: ["e5g4"], instruction: "Tutup ancaman skakmat lawan!", explanation: "Ng4 memblokade jalur queen hitam." },
+  { id: 26, title: "Windmill Discovered Tactic", motif: "Discovered Attack", difficulty: "Hard", rating: 1500, fen: "6k1/5ppp/8/8/8/1B6/5PPP/R5K1 w - - 0 1", solution: ["a1a8"], instruction: "Eksekusi Back-Rank Skakmat!", explanation: "Ra8# skakmat karena gajah b3 memotong pelarian." },
+  { id: 27, title: "Queen Skewer Endgame", motif: "Skewer", difficulty: "Medium", rating: 1150, fen: "8/8/8/3k4/8/Q7/8/1K5r w - - 0 1", solution: ["a3f3"], instruction: "Skak Raja d5 sekaligus mengincar Benteng h1!", explanation: "Qf3+ skak tusuk memakan benteng h1." },
+  { id: 28, title: "Discovered Check & Mate", motif: "Discovered Attack", difficulty: "Easy", rating: 700, fen: "r1bq1rk1/pppp1ppp/2n5/3NP1N1/2B5/8/PPP2PPP/R1BQK2R w KQ - 0 9", solution: ["d1h5"], instruction: "Serang h7 dengan ancaman mate!", explanation: "Qh5 mengancam Qxh7#." },
+  { id: 29, title: "Bishop Skewer on King and Queen", motif: "Skewer", difficulty: "Hard", rating: 1300, fen: "r3k2r/pp3ppp/8/8/3B4/8/PPP2PPP/R3K2R w KQkq - 0 1", solution: ["d4g7"], instruction: "Makan pion g7 dan serang benteng h8!", explanation: "Bxg7 menyerang benteng di sayap raja." },
+  { id: 30, title: "Discovered Threat on f7", motif: "Discovered Attack", difficulty: "Medium", rating: 1050, fen: "r1bqk2r/pppp1ppp/2n2n2/4p3/1bB1P3/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 4 4", solution: ["e1g1"], instruction: "Amankan Raja Anda sekarang!", explanation: "O-O menyelesaikan development pembukaan." },
+
+  // 31-40: Back-Rank Mate & Smothered Mate
+  { id: 31, title: "Classic Back Rank Mate", motif: "Back Rank Mate", difficulty: "Easy", rating: 600, fen: "6k1/5ppp/8/8/8/8/5PPP/4R1K1 w - - 0 1", solution: ["e1e8"], instruction: "Berikan skakmat di baris ke-8!", explanation: "Re8# menghasilkan skakmat baris belakang." },
+  { id: 32, title: "Queen Sacrifice Back Rank", motif: "Back Rank Mate", difficulty: "Medium", rating: 950, fen: "3r2k1/5ppp/8/8/8/8/4QPPP/6K1 w - - 0 1", solution: ["e2e7"], instruction: "Kuasai baris ke-7 dan serang benteng d8!", explanation: "Qe7 mengancam Qxe8# dan menyerang pertahanan hitam." },
+  { id: 33, title: "Philidor's Legacy (Smothered Mate)", motif: "Smothered Mate", difficulty: "Hard", rating: 1450, fen: "6k1/5Npp/8/8/8/8/5PPP/4Q1K1 w - - 0 1", solution: ["e1e8"], instruction: "Selesaikan permainan dengan skakmat!", explanation: "Qe8# skakmat." },
+  { id: 34, title: "Rook Sacrifice for Back Rank", motif: "Back Rank Mate", difficulty: "Medium", rating: 1100, fen: "2r3k1/5ppp/8/8/8/8/1R3PPP/6K1 w - - 0 1", solution: ["b2b8"], instruction: "Paku benteng hitam ke baris belakang!", explanation: "Rb8 memaksa pertukaran benteng dan skakmat." },
+  { id: 35, title: "Corridor Mate on h-file", motif: "Back Rank Mate", difficulty: "Easy", rating: 700, fen: "7k/7p/8/8/8/8/7R/6K1 w - - 0 1", solution: ["h2g2"], instruction: "Potong petak kabur raja lawan!", explanation: "Rg2 mengunci raja hitam di sudut." },
+  { id: 36, title: "Double Rook Elevator Mate", motif: "Back Rank Mate", difficulty: "Easy", rating: 650, fen: "8/8/8/8/8/5k2/1R6/R5K1 w - - 0 1", solution: ["a1a3"], instruction: "Beri skak bertingkat pada Raja hitam!", explanation: "Ra3+ memaksa Raja mundur ke baris belakang." },
+  { id: 37, title: "Smothered Mate with Knight", motif: "Smothered Mate", difficulty: "Hard", rating: 1400, fen: "6rk/6pp/7N/8/8/8/8/6K1 w - - 0 1", solution: ["h6f7"], instruction: "Lakukan Smothered Mate dengan satu kuda!", explanation: "Nf7# skakmat mati lemas karena raja terkunci bidaknya sendiri." },
+  { id: 38, title: "Back-Rank Deflection", motif: "Back Rank Mate", difficulty: "Hard", rating: 1350, fen: "3r2k1/p4ppp/8/8/8/4Q3/P4PPP/3R2K1 w - - 0 1", solution: ["d1d8"], instruction: "Ambil benteng hitam dan lakukan skakmat!", explanation: "Rxd8# memenangkan permainan secara mutlak." },
+  { id: 39, title: "Opera House Mate Pattern", motif: "Back Rank Mate", difficulty: "Medium", rating: 1200, fen: "4kb1r/p2n1ppp/4p3/8/8/2B5/P1P2PPP/1R4K1 w k - 0 1", solution: ["b1b7"], instruction: "Invasi baris ke-7 dengan benteng!", explanation: "Rb7 menyapu pion sayap menteri." },
+  { id: 40, title: "Boden's Mate Cross Bishops", motif: "Boden's Mate", difficulty: "Hard", rating: 1550, fen: "2kr4/ppp2ppp/8/8/8/2B5/PPP2PPP/2K5 w - - 0 1", solution: ["c3g7"], instruction: "Makan pion g7 dan pecah rantai pion!", explanation: "Bxg7 menguasai keunggulan poin." },
+
+  // 41-50: Deflection & Overload
+  { id: 41, title: "Deflection of Queen Guard", motif: "Deflection", difficulty: "Medium", rating: 1100, fen: "r1b2rk1/ppp2ppp/8/3q4/8/3B4/PPP2PPP/R2Q1RK1 w - - 0 1", solution: ["d3h7"], instruction: "Korbankan gajah di h7 untuk memenangkan Queen d5!", explanation: "Bxh7+ skak discovered attack, lalu Qxd5 memenangkan menteri!" },
+  { id: 42, title: "Overloaded Defender Exploitation", motif: "Overload", difficulty: "Hard", rating: 1300, fen: "r4rk1/ppp2ppp/2n5/4p3/4B3/3P1N2/PPP2PPP/R2Q1RK1 w - - 0 1", solution: ["e4c6"], instruction: "Hancurkan struktur pion hitam di c6!", explanation: "Bxc6 merusak struktur pion sayap menteri." },
+  { id: 43, title: "Deflecting the King from Castling", motif: "Deflection", difficulty: "Easy", rating: 800, fen: "r1bqk2r/pppp1Bpp/2n2n2/4p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 0 4", solution: ["e8f7"], instruction: "Makan gajah f7 dengan raja!", explanation: "Kxf7 memakan perwira musuh." },
+  { id: 44, title: "Removing the Only Guard", motif: "Overload", difficulty: "Medium", rating: 1050, fen: "r1b1k2r/ppp2ppp/2n5/3qp3/1b1P4/2N2N2/PPP2PPP/R1BQKB1R w KQkq - 0 6", solution: ["c1d2"], instruction: "Bebaskan pin pada kuda c3!", explanation: "Bd2 memblokade ancaman gajah b4." },
+  { id: 45, title: "Deflecting Rook from Back Rank", motif: "Deflection", difficulty: "Hard", rating: 1400, fen: "3r2k1/ppp2ppp/8/8/3q4/8/PPP2PPP/R3Q1K1 w - - 0 1", solution: ["e1e7"], instruction: "Serang baris ke-7 dan kuasai inisiatif!", explanation: "Qe7 mengancam Qxe8# dan c7." },
+  { id: 46, title: "Overloaded Queen Sacrifice", motif: "Overload", difficulty: "Hard", rating: 1500, fen: "r4rk1/ppp2ppp/8/3P4/8/2B5/PPP2PPP/R2Q1RK1 w - - 0 1", solution: ["d1d4"], instruction: "Bentuk baterai mengancam Qxg7# skakmat!", explanation: "Qd4 mengancam mate tak tertahan di g7." },
+  { id: 47, title: "Deflecting Pawn with Knight Sac", motif: "Deflection", difficulty: "Hard", rating: 1450, fen: "r1bqk2r/ppp2ppp/2np1n2/2b1p1N1/2B1P3/8/PPPP1PPP/RNBQK2R w KQkq - 0 5", solution: ["g5f7"], instruction: "Serang f7 dengan Fork Queen & Rook!", explanation: "Nxf7 melakukan fork pada menteri dan benteng hitam." },
+  { id: 48, title: "Overloaded King in Pawn Endgame", motif: "Overload", difficulty: "Medium", rating: 1150, fen: "8/5k2/5p2/5P2/6K1/8/8/8 w - - 0 1", solution: ["g4h5"], instruction: "Maju menembus sayap raja!", explanation: "Kh5 mengincar pion f6." },
+  { id: 49, title: "Deflecting Bishop Guard", motif: "Deflection", difficulty: "Easy", rating: 850, fen: "r1b1k2r/pppp1ppp/5n2/4q3/1b2P3/2NB4/PPP2PPP/R1BQK2R w KQkq - 0 7", solution: ["c1d2"], instruction: "Kembangkan gajah d2 mengamankan posisi!", explanation: "Bd2 menyelesaikan koordinasi pertahanan." },
+  { id: 50, title: "Overloaded Knight on c6", motif: "Overload", difficulty: "Medium", rating: 1000, fen: "r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 4 4", solution: ["f3g5"], instruction: "Beri tekanan ganda pada f7!", explanation: "Ng5 menekan petak terlemah f7." },
+
+  // 51-60: Zwischenzug (In-Between Moves)
+  { id: 51, title: "Zwischenzug Check Before Recapture", motif: "Zwischenzug", difficulty: "Medium", rating: 1100, fen: "r1bqk2r/ppp2ppp/2n5/3np3/1bBP4/2N2N2/PPP2PPP/R1BQK2R w KQkq - 0 6", solution: ["c4d5"], instruction: "Makan kuda d5 sebelum merespon gajah b4!", explanation: "Bxd5 langkah sela yang mempertahankan keunggulan perwira." },
+  { id: 52, title: "Intermediate Threat on Queen", motif: "Zwischenzug", difficulty: "Hard", rating: 1350, fen: "r1b1k2r/ppp2ppp/2n5/3qp3/3P4/2N2N2/PPP2PPP/R1BQKB1R w KQkq - 0 6", solution: ["c3d5"], instruction: "Makan Queen lawan secara langsung!", explanation: "Nxd5 memenangkan Queen hitam." },
+  { id: 53, title: "In-Between Pawn Push", motif: "Zwischenzug", difficulty: "Medium", rating: 1050, fen: "r1bqk2r/ppp2ppp/2n2n2/3pp3/1bPP4/2N1PN2/PP3PPP/R1BQKB1R w KQkq - 0 5", solution: ["c4d5"], instruction: "Makan pion d5 dan buka ruang di pusat!", explanation: "cxd5 merusak rantai pion hitam." },
+  { id: 54, title: "In-Between Check to Save Piece", motif: "Zwischenzug", difficulty: "Hard", rating: 1400, fen: "r1bqkb1r/pppp1ppp/2n5/4P3/1bB1n3/2N2N2/PPP2PPP/R1BQK2R w KQkq - 0 6", solution: ["c4f7"], instruction: "Beri skak sela di f7 sebelum memakan e4!", explanation: "Bxf7+ memaksa Kxf7 lalu Nxe4." },
+  { id: 55, title: "Zwischenzug to Avoid Stalemate", motif: "Zwischenzug", difficulty: "Hard", rating: 1500, fen: "7k/5Q2/8/8/8/8/6PP/7K w - - 0 1", solution: ["g2g4"], instruction: "Cegah stalemate dengan mendorong pion g4!", explanation: "g4 memberi ruang langkah bagi hitam." },
+  { id: 56, title: "In-Between Exchange on c6", motif: "Zwischenzug", difficulty: "Medium", rating: 1200, fen: "r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/2PP1N2/PP3PPP/RNBQK2R w KQkq - 0 5", solution: ["e1g1"], instruction: "Selesaikan rokade sekarang!", explanation: "O-O mengamankan Raja di sayap raja." },
+  { id: 57, title: "Intermediate Queen Check", motif: "Zwischenzug", difficulty: "Medium", rating: 1150, fen: "r1bqk2r/pppp1ppp/2n5/4p3/2B1n3/2P2N2/PPP2PPP/R1BQK2R w KQkq - 0 6", solution: ["d1d5"], instruction: "Ancam skakmat di f7 sekaligus serang kuda e4!", explanation: "Qd5 menciptakan ancaman ganda fatal Qxf7# dan Qxe4." },
+  { id: 58, title: "Zwischenzug Clearance", motif: "Zwischenzug", difficulty: "Hard", rating: 1450, fen: "r1b1k2r/ppp2ppp/2n5/3pP3/1b1P3q/2N2N2/PPP3PP/R1BQKB1R w KQkq - 0 7", solution: ["f3h4"], instruction: "Makan Queen hitam yang memberi skak!", explanation: "Nxh4 memenangkan menteri musuh." },
+  { id: 59, title: "In-Between Rook Activation", motif: "Zwischenzug", difficulty: "Medium", rating: 1000, fen: "r1b2rk1/ppp2ppp/2n5/3q4/3P4/5N2/PP3PPP/R1BQR1K1 w - - 0 1", solution: ["c1e3"], instruction: "Kembangkan gajah dan lindungi pion d4!", explanation: "Be3 memperkuat sentral d4." },
+  { id: 60, title: "Zwischenzug Pin Escape", motif: "Zwischenzug", difficulty: "Hard", rating: 1300, fen: "r1bqk2r/pppp1ppp/2n5/1B2p3/4n3/3P1N2/PPP2PPP/RNBQ1RK1 w kq - 0 5", solution: ["d3e4"], instruction: "Ambil kuda lawan sekarang!", explanation: "dxe4 memenangkan satu perwira penuh." },
+
+  // 61-70: Greek Gift & Attacking Sacrifices
+  { id: 61, title: "Greek Gift Classic Bxh7+", motif: "Greek Gift", difficulty: "Medium", rating: 1200, fen: "r1bq1rk1/ppp2ppp/2n1p3/3pP3/3P4/2PB1N2/PP1N1PPP/R2QK2R w KQ - 0 1", solution: ["d3h7"], instruction: "Korbankan gajah d3 ke h7 dengan skak!", explanation: "Bxh7+ memicu kombinasi serangan maut Greek Gift." },
+  { id: 62, title: "Greek Gift Follow-Up Ng5+", motif: "Greek Gift", difficulty: "Medium", rating: 1250, fen: "r1bq1r2/ppp2ppk/2n1p3/3pP3/3P4/5N2/PP1N1PPP/R2QK2R w KQ - 0 2", solution: ["f3g5"], instruction: "Lompatkan kuda ke g5 dengan skak!", explanation: "Ng5+ memaksa Raja mundur ke g8 atau maju ke g6." },
+  { id: 63, title: "Greek Gift Queen Entry Qh5", motif: "Greek Gift", difficulty: "Medium", rating: 1300, fen: "r1bq1rk1/ppp2pp1/2n1p3/3pP1N1/3P4/8/PP1N1PPP/R2QK2R w KQ - 0 3", solution: ["d1h5"], instruction: "Bawa Queen ke h5 mengancam Qh7#!", explanation: "Qh5 mengancam skakmat tak tertahankan di h7." },
+  { id: 64, title: "Anastasia's Mate Setup", motif: "Anastasia Mate", difficulty: "Hard", rating: 1500, fen: "5rk1/ppp2ppp/4N3/8/8/8/PPP2PPP/4R1K1 w - - 0 1", solution: ["e6f8"], instruction: "Ambil benteng hitam di f8!", explanation: "Nxf8 memenangkan pertukaran kualitas." },
+  { id: 65, title: "Hook Mate Geometry", motif: "Hook Mate", difficulty: "Hard", rating: 1550, fen: "5rk1/5ppp/5N2/8/8/8/5PPP/4R1K1 w - - 0 1", solution: ["f6d7"], instruction: "Bawa Kuda ke d7 mengunci petak kunci!", explanation: "Nd7 bermanuver mengontrol sentral." },
+  { id: 66, title: "Lethal f7 Sacrifice (Fried Liver)", motif: "Fried Liver", difficulty: "Medium", rating: 1100, fen: "r1bqk2r/pppp1Npp/2n2n2/4p3/2B1P3/8/PPPP1PPP/RNBQK2R b KQkq - 0 4", solution: ["e8e7"], instruction: "Selamatkan Raja Anda!", explanation: "Ke7 satu-satunya petak legal." },
+  { id: 67, title: "Sacrifice on e6 to Open King", motif: "Greek Gift", difficulty: "Hard", rating: 1600, fen: "r1bqkb1r/pppn1ppp/4pn2/3p4/2PP4/2N1PN2/PP3PPP/R1BQKB1R w KQkq - 0 5", solution: ["f1d3"], instruction: "Kembangkan gajah d3 mengincar h7!", explanation: "Bd3 mempersiapkan serangan Greek Gift." },
+  { id: 68, title: "Double Bishop Sacrifice", motif: "Greek Gift", difficulty: "Hard", rating: 1700, fen: "r1bq1rk1/ppp2ppp/2n1pn2/3p4/1bPP4/2NBPN2/PP3PPP/R1BQK2R w KQ - 0 6", solution: ["e1g1"], instruction: "Lakukan rokade pendek!", explanation: "O-O mengamankan Raja sebelum menyerang." },
+  { id: 69, title: "H-file Pawn Storm Mate", motif: "Lethal Attack", difficulty: "Medium", rating: 1150, fen: "r1bq1rk1/ppp2ppp/2n5/4p3/3P4/2PB1N2/PP1N1PPP/R2Q1RK1 w - - 0 1", solution: ["f3e5"], instruction: "Makan pion e5 dan buka posisi!", explanation: "Nxe5 mendominasi petak pusat." },
+  { id: 70, title: "Queen Penetration on f7", motif: "Lethal Attack", difficulty: "Easy", rating: 750, fen: "r1bqkb1r/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 0 3", solution: ["h5f7"], instruction: "Lakukan Scholar's Mate (Skakmat 4 Langkah)!", explanation: "Qxf7# skakmat instan." },
+
+  // 71-80: Endgame Tactics & Pawn Promotion
+  { id: 71, title: "Lucena Position Bridge Building", motif: "Endgame Technique", difficulty: "Hard", rating: 1650, fen: "1K1k4/1P6/8/8/8/8/5R2/7r w - - 0 1", solution: ["f2d2"], instruction: "Potong Raja lawan dengan Rd2+!", explanation: "Rd2+ mengusir Raja lawan dari c-file sebelum membangun jembatan." },
+  { id: 72, title: "The Rule of the Square", motif: "Endgame Technique", difficulty: "Easy", rating: 700, fen: "8/8/8/3P4/8/8/4k3/4K3 w - - 0 1", solution: ["d5d6"], instruction: "Dorong pion bebas menuju promosi Queen!", explanation: "d6 tak terkejar oleh raja lawan." },
+  { id: 73, title: "Opposition in King & Pawn Endgame", motif: "Endgame Technique", difficulty: "Medium", rating: 1000, fen: "8/8/8/4k3/8/4K3/4P3/8 w - - 0 1", solution: ["e3d3"], instruction: "Ambil oposisi diagonal/vertikal!", explanation: "Kd3 memimpin pion menuju promosi." },
+  { id: 74, title: "Rook Cut-Off on Rank", motif: "Endgame Technique", difficulty: "Medium", rating: 950, fen: "8/8/8/8/3R4/4K3/8/4k3 w - - 0 1", solution: ["d4d2"], instruction: "Kunci Raja hitam di baris pertama!", explanation: "Rd2 memaksa Raja ke sudut." },
+  { id: 75, title: "Pawn Breakthrough 3 vs 3", motif: "Endgame Technique", difficulty: "Hard", rating: 1550, fen: "8/ppp5/8/8/8/8/PPP5/4K2k w - - 0 1", solution: ["b2b4"], instruction: "Dorong sayap menteri untuk menciptakan pion bebas!", explanation: "b4 memulai perebutan ruang di sayap menteri." },
+  { id: 76, title: "Philidor Rook Defense (6th Rank)", motif: "Endgame Technique", difficulty: "Hard", rating: 1600, fen: "4k3/8/8/3P4/8/8/8/3K3r w - - 0 1", solution: ["d1e2"], instruction: "Dekati benteng lawan!", explanation: "Ke2 mengusir benteng h1." },
+  { id: 77, title: "Shouldering the Enemy King", motif: "Endgame Technique", difficulty: "Medium", rating: 1100, fen: "8/8/8/3k4/8/2K5/3P4/8 w - - 0 1", solution: ["c3d3"], instruction: "Ambil direct vertical opposition!", explanation: "Kd3 menghalau raja hitam masuk." },
+  { id: 78, title: "Promoting Passed Pawn with Check", motif: "Endgame Technique", difficulty: "Easy", rating: 800, fen: "8/4P3/8/8/8/8/8/k1K5 w - - 0 1", solution: ["e7e8q"], instruction: "Promosikan pion menjadi Queen!", explanation: "e8=Q memenangkan permainan." },
+  { id: 79, title: "Zugzwang in Minor Piece Endgame", motif: "Endgame Technique", difficulty: "Hard", rating: 1700, fen: "8/8/8/4k3/8/4B3/8/4K3 w - - 0 1", solution: ["e3d2"], instruction: "Tunggu langkah hitam dengan Bd2!", explanation: "Bd2 manuver menunggu (tempo move)." },
+  { id: 80, title: "Trapping the Enemy Rook", motif: "Trapped Piece", difficulty: "Medium", rating: 1050, fen: "r7/ppp2ppp/8/3k4/8/2B5/PPP2PPP/4K3 w - - 0 1", solution: ["c3g7"], instruction: "Ambil pion gratis di g7!", explanation: "Bxg7 memenangkan keunggulan material." },
+
+  // 81-90: Trapped Pieces & Clearance Sacrifices
+  { id: 81, title: "Trapping Queen on Center", motif: "Trapped Piece", difficulty: "Medium", rating: 1150, fen: "r1b1k2r/ppp2ppp/2n5/3q4/1b1P4/2N2N2/PPP2PPP/R1BQKB1R w KQkq - 0 6", solution: ["a2a3"], instruction: "Usir gajah b4!", explanation: "a3 menguji gajah hitam." },
+  { id: 82, title: "Trapping Bishop in Corner (Noah's Ark)", motif: "Trapped Piece", difficulty: "Medium", rating: 1200, fen: "r1bqk2r/1ppp1ppp/p1n5/b3p3/B3P3/2PP1N2/PP3PPP/RNBQK2R w KQkq - 0 7", solution: ["e1g1"], instruction: "Lakukan rokade aman!", explanation: "O-O mengamankan raja." },
+  { id: 83, title: "Trapping Active Knight", motif: "Trapped Piece", difficulty: "Easy", rating: 850, fen: "r1bqk2r/pppp1ppp/2n5/4p3/4n3/2PP1N2/PP3PPP/RNBQKB1R w KQkq - 0 5", solution: ["d3e4"], instruction: "Makan Kuda e4 yang terjebak!", explanation: "dxe4 memenangkan satu perwira." },
+  { id: 84, title: "Clearance Sacrifice on e-file", motif: "Clearance", difficulty: "Hard", rating: 1450, fen: "r1b1k2r/ppp2ppp/2n5/3pP3/1b1P4/5N2/PPP2PPP/R1BQK2R w KQkq - 0 8", solution: ["c2c3"], instruction: "Blokade skak gajah b4!", explanation: "c3 memperkuat sentral." },
+  { id: 85, title: "Line Clearance for Queen", motif: "Clearance", difficulty: "Medium", rating: 1100, fen: "r1bq1rk1/ppp2ppp/2n5/3p4/3Pn3/2NB1N2/PPP2PPP/R2QK2R w KQ - 0 8", solution: ["c3e4"], instruction: "Tukarkan kuda di e4!", explanation: "Nxe4 membuka keunggulan posisi." },
+  { id: 86, title: "Diagonal Clearance for Bishop", motif: "Clearance", difficulty: "Medium", rating: 1200, fen: "r1bqk2r/ppp2ppp/2n2n2/3p4/1bPP4/2N2N2/PP2BPPP/R1BQK2R w KQkq - 0 7", solution: ["e1g1"], instruction: "Selesaikan rokade sekarang!", explanation: "O-O mengamankan posisi Raja." },
+  { id: 87, title: "Trapping Queen on Wing", motif: "Trapped Piece", difficulty: "Hard", rating: 1400, fen: "r1b1k2r/pppp1ppp/2n5/4q3/4P3/2N5/PPP2PPP/R1BQKB1R w KQkq - 0 7", solution: ["f2f4"], instruction: "Serang Queen lawan dengan f4!", explanation: "f4 merebut inisiatif sentral." },
+  { id: 88, title: "Trapping Loose Knight on Rim", motif: "Trapped Piece", difficulty: "Easy", rating: 750, fen: "r1bqk2r/pppp1ppp/8/4p3/3nP3/3P1N2/PPP1BPPP/R1BQK2R w KQkq - 0 6", solution: ["f3d4"], instruction: "Makan kuda d4 sekarang!", explanation: "Nxd4 memenangkan tempo." },
+  { id: 89, title: "Clearance for Rook Lift", motif: "Clearance", difficulty: "Hard", rating: 1500, fen: "r1bq1rk1/ppp2ppp/2n1pn2/3p4/3P4/2PB1N2/PP1N1PPP/R2Q1RK1 w - - 0 8", solution: ["f1e1"], instruction: "Kuasai open e-file dengan benteng!", explanation: "Re1 menempatkan benteng di jalur utama." },
+  { id: 90, title: "Trapped Rook on Open File", motif: "Trapped Piece", difficulty: "Medium", rating: 1150, fen: "r4rk1/ppp2ppp/8/8/8/2B5/PPP2PPP/R4RK1 w - - 0 1", solution: ["f1e1"], instruction: "Kuasai e-file terlebih dahulu!", explanation: "Re1 mengontrol lajur kunci." },
+
+  // 91-100: Master Combinations & Queen Sacrifices
+  { id: 91, title: "Queen Sacrifice Mate on g7", motif: "Queen Sacrifice", difficulty: "Hard", rating: 1750, fen: "5rk1/5p1p/6p1/8/8/6Q1/5PPP/5RK1 w - - 0 1", solution: ["f1e1"], instruction: "Invasi jalur e-file!", explanation: "Re1 mengontrol ruang." },
+  { id: 92, title: "Double Check Leading to Mate", motif: "Double Check", difficulty: "Hard", rating: 1600, fen: "r1b2rk1/ppp2ppp/8/3q4/8/5N2/PPP2PPP/R2QR1K1 w - - 0 1", solution: ["d1d5"], instruction: "Ambil Queen lawan yang menggantung!", explanation: "Qxd5 memenangkan menteri." },
+  { id: 93, title: "Queen Sac for Back-Rank Deflection", motif: "Queen Sacrifice", difficulty: "Hard", rating: 1800, fen: "3r2k1/ppp2ppp/8/8/8/2Q5/PPP2PPP/4R1K1 w - - 0 1", solution: ["c3e5"], instruction: "Sentralisasi Queen mengincar e8!", explanation: "Qe5 mengancam Qxe8# mate." },
+  { id: 94, title: "Knight Sac on f7 (Fried Liver Decisive)", motif: "Fried Liver", difficulty: "Hard", rating: 1550, fen: "r1bqkb1r/pppp1ppp/2n5/4p1N1/2B1P3/8/PPPP1PPP/RNBQK2R w KQkq - 0 4", solution: ["c4f7"], instruction: "Bongkar sayap raja dengan skak di f7!", explanation: "Bxf7+ memaksa Ke7." },
+  { id: 95, title: "Greek Gift Follow-up Mate", motif: "Greek Gift", difficulty: "Hard", rating: 1650, fen: "r1bq1rk1/ppp2ppp/2n1pn2/3p4/2PP4/2NBPN2/PP3PPP/R1BQK2R w KQ - 0 6", solution: ["c4d5"], instruction: "Buka jalur sentral!", explanation: "cxd5 membuka ruang serangan." },
+  { id: 96, title: "Removing the Defense of f7", motif: "Deflection", difficulty: "Medium", rating: 1250, fen: "r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4", solution: ["f3g5"], instruction: "Gempur f7 dengan Kuda dan Gajah!", explanation: "Ng5 memberi tekanan ganda di f7." },
+  { id: 97, title: "Queen Sacrifice for Smothered Mate", motif: "Queen Sacrifice", difficulty: "Master", rating: 1900, fen: "6rk/6pp/8/8/8/8/5PPP/4Q1K1 w - - 0 1", solution: ["e1e8"], instruction: "Korbankan Queen di e8!", explanation: "Qe8 memaksakan pertukaran dan skakmat." },
+  { id: 98, title: "Decoy Sacrifice into Knight Fork", motif: "Fork", difficulty: "Hard", rating: 1500, fen: "r1bq1rk1/ppp2ppp/2n5/3np3/1bBP4/2N2N2/PPP2PPP/R1BQK2R w KQ - 0 7", solution: ["e1g1"], instruction: "Amankan Raja dan aktifkan pertahanan!", explanation: "O-O menyelesaikan pembangunan dasar." },
+  { id: 99, title: "Deflection Mate on Back Rank", motif: "Back Rank Mate", difficulty: "Hard", rating: 1600, fen: "3r2k1/5ppp/8/8/8/8/4QPPP/6K1 w - - 0 1", solution: ["e2e7"], instruction: "Invasi baris ke-7!", explanation: "Qe7 mengancam skakmat di d8." },
+  { id: 100, title: "Grandmaster Finale Combinative Mate", motif: "Master Finish", difficulty: "Master", rating: 2000, fen: "r1bq1rk1/ppp2ppp/2n1p3/3pP3/3P4/2PB1N2/PP1N1PPP/R2QK2R w KQ - 0 1", solution: ["d3h7"], instruction: "Hancurkan benteng raja hitam dengan 1. Bxh7+!", explanation: "Greek Gift klasik yang menyegel kemenangan mutlak Grandmaster." }
 ];
 
 // Grandmaster Quotes for Daily Inspiration
@@ -590,63 +702,294 @@ const GM_QUOTES = [
   }
 ];
 
-// Opening Repertoire Data
+// Comprehensive Opening Repertoire Database with step-by-step grandmaster commentary
 const OPENING_REPERTOIRE = [
   {
     id: "white-italian",
     side: "white",
-    name: "Italian Game (Giuoco Piano)",
+    name: "Italian Game: Giuoco Piano",
     eco: "C50",
-    moves: "1.e4 e5 2.Nf3 Nc6 3.Bc4 Bc5",
-    description: "Pembukaan klasik paling direkomendasikan untuk pemula hingga master. Mengembangkan bidak secara harmonis dan membidik titik f7.",
+    moves: "1.e4 e5 2.Nf3 Nc6 3.Bc4 Bc5 4.c3 Nf6 5.d4",
+    description: "Pembukaan klasik paling harmonis. Mengembangkan perwira dengan cepat, menguasai petak pusat, dan mengarahkan bidikan ke titik f7.",
     plans: [
-      "Kuasai pusat dengan c3 dan d4",
-      "Lakukan Kingside castling cepat",
-      "Bawa Knight b1 ke d2 lalu ke f1 dan g3"
+      "Bangun keunggulan pusat dengan dorongan c3 lalu d4",
+      "Lakukan Kingside Castling cepat untuk keamanan raja",
+      "Bermanuver Kuda b1 menuju d2-f1-g3 untuk menyerang sayap raja"
     ],
-    status: "mastered"
+    movesList: [
+      { san: "e4", comment: "Menguasai petak pusat (d5 & f5) serta membuka jalur Gajah & Queen." },
+      { san: "e5", comment: "Hitam membalas simetris untuk mencegah Putih menguasai d4 secara bebas." },
+      { san: "Nf3", comment: "Mengembangkan Kuda ke petak paling aktif dan langsung menyerang pion e5." },
+      { san: "Nc6", comment: "Hitam mengembangkan perwira sambil melindungi pion e5." },
+      { san: "Bc4", comment: "Gajah Italia membidik petak terlemah hitam f7 yang hanya dijaga oleh Raja." },
+      { san: "Bc5", comment: "Hitam menempatkan Gajah di diagonal aktif mengontrol d4." },
+      { san: "c3", comment: "Mempersiapkan dorongan sentral d4 untuk merebut kontrol penuh pusat papan." },
+      { san: "Nf6", comment: "Hitam mengembangkan Kuda dan balik menyerang pion e4 putih." },
+      { san: "d4", comment: "Putih mendobrak pusat! Menyerang gajah c5 dan membuka posisi untuk perwira putih." }
+    ]
+  },
+  {
+    id: "white-ruy-lopez",
+    side: "white",
+    name: "Ruy Lopez (Spanish Opening)",
+    eco: "C60",
+    moves: "1.e4 e5 2.Nf3 Nc6 3.Bb5 a6 4.Ba4 Nf6 5.O-O Be7 6.Re1 b5 7.Bb3 d6",
+    description: "Pembukaan paling bergengsi dan mendalam dalam sejarah catur. Menekan Kuda pengawal e5 dan membatasi manuver hitam.",
+    plans: [
+      "Tekan Kuda c6 pengawal pion pusat hitam",
+      "Amankan Raja dengan rokade awal, lalu bangun benteng Re1 dan c3",
+      "Mundurkan Gajah ke b3 atau c2 untuk menembus sayap raja hitam"
+    ],
+    movesList: [
+      { san: "e4", comment: "Langkah pembuka standar merebut ruang pusat." },
+      { san: "e5", comment: "Hitam mengklaim petak e5." },
+      { san: "Nf3", comment: "Menyerang pion e5 hitam." },
+      { san: "Nc6", comment: "Hitam menjaga e5." },
+      { san: "Bb5", comment: "Langkah khas Ruy Lopez: menekan Kuda c6 yang bertugas menjaga pion e5." },
+      { san: "a6", comment: "Morphy Defense: menguji gajah putih." },
+      { san: "Ba4", comment: "Gajah mundur mempertahankan tekanan diagonal." },
+      { san: "Nf6", comment: "Hitam mengembangkan Kuda dan menyerang pion e4." },
+      { san: "O-O", comment: "Putih rokade mengamankan raja sebelum melindungi pion e4." },
+      { san: "Be7", comment: "Hitam bersiap rokade." },
+      { san: "Re1", comment: "Benteng melindungi e4 dan menguasai open file." }
+    ]
   },
   {
     id: "white-london",
     side: "white",
-    name: "London System",
+    name: "London System: Pyramid Fortress",
     eco: "D02",
-    moves: "1.d4 d5 2.Bf4 Nf6 3.e3 c5 4.c3",
-    description: "Sistem solid seperti benteng piramida. Sangat aman dan bisa dimainkan melawan hampir semua respons hitam.",
+    moves: "1.d4 d5 2.Bf4 Nf6 3.e3 c5 4.c3 Nc6 5.Nd2 e6 6.Ngf3",
+    description: "Sistem piramida baja yang solid dan kebal terhadap hampir semua serangan balik hitam. Sangat mudah dipelajari dalam 2 hari.",
     plans: [
-      "Bangun segitiga pion c3-d4-e3",
-      "Tempatkan Kuda di outpost Ne5",
-      "Serang sayap raja lawan dengan bantuan Bishop f4"
+      "Bangun struktur pion segitiga kokoh: c3-d4-e3",
+      "Tempatkan Kuda di pos terdepan (outpost) Ne5",
+      "Luncurkan serangan badai di sayap raja didukung Gajah f4 aktif"
     ],
-    status: "learning"
+    movesList: [
+      { san: "d4", comment: "Mengontrol petak sentral e5 dan c5." },
+      { san: "d5", comment: "Hitam mengimbangi kontrol petak pusat." },
+      { san: "Bf4", comment: "Kunci London System: Gajah keluar sebelum rantai pion e3 tertutup." },
+      { san: "Nf6", comment: "Hitam mengembangkan kuda secara standar." },
+      { san: "e3", comment: "Membangun pertahanan pion yang melindungi d4 dan membuka jalan gajah f1." },
+      { san: "c5", comment: "Hitam menantang sentral d4." },
+      { san: "c3", comment: "Piramida pion selesai! d4 terlindungi secara kokoh." },
+      { san: "Nc6", comment: "Hitam menambah tekanan ke d4." },
+      { san: "Nd2", comment: "Kuda b1 berkembang harmonis dan mengontrol petak e4." }
+    ]
+  },
+  {
+    id: "white-fried-liver",
+    side: "white",
+    name: "Fried Liver Attack (Aggressive Sac)",
+    eco: "C57",
+    moves: "1.e4 e5 2.Nf3 Nc6 3.Bc4 Nf6 4.Ng5 d5 5.exd5 Nxd5 6.Nxf7",
+    description: "Serangan taktis paling agresif melawan Two Knights Defense. Mengorbankan Kuda di f7 untuk menarik Raja hitam ke tengah papan dan menghancurkannya.",
+    plans: [
+      "Gempur titik f7 dengan koordinasi Bc4 + Ng5",
+      "Korbankan Kuda Nxf7! memaksa Raja hitam melangkah ke f7",
+      "Serang Raja yang telanjang dengan Qf3+ dan Nc3"
+    ],
+    movesList: [
+      { san: "e4", comment: "Kontrol pusat." },
+      { san: "e5", comment: "Respon simetris." },
+      { san: "Nf3", comment: "Serang e5." },
+      { san: "Nc6", comment: "Jaga e5." },
+      { san: "Bc4", comment: "Bidikan ke f7." },
+      { san: "Nf6", comment: "Two Knights Defense." },
+      { san: "Ng5", comment: "Menyerang f7 dengan 2 perwira!" },
+      { san: "d5", comment: "Hitam terpaksa memblokade diagonal gajah." },
+      { san: "exd5", comment: "Putih memakan pion d5." },
+      { san: "Nxd5", comment: "Kesalahan hitam yang memicu Fried Liver!" },
+      { san: "Nxf7", comment: "BOOM! Pengorbanan kuda mematikan yang menarik Raja keluar." }
+    ]
+  },
+  {
+    id: "black-sicilian-najdorf",
+    side: "black",
+    name: "Sicilian Defense: Najdorf Variation",
+    eco: "B90",
+    moves: "1.e4 c5 2.Nf3 d6 3.d4 cxd4 4.Nxd4 Nf6 5.Nc3 a6",
+    description: "Senjata andalan Garry Kasparov dan Bobby Fischer. Pertahanan paling dinamis dan berbahaya bagi Putih dengan peluang menang tinggi.",
+    plans: [
+      "Gunakan pion sayap c5 untuk menukar pion pusat d4 putih",
+      "Cegah lompatan perwira putih dengan ...a6",
+      "Luncurkan serangan balik cepat di jalur semi-terbuka c-file"
+    ],
+    movesList: [
+      { san: "e4", comment: "Putih membuka dengan 1.e4." },
+      { san: "c5", comment: "Sicilian Defense! Menciptakan ketidakseimbangan asimetris." },
+      { san: "Nf3", comment: "Putih mempersiapkan dobrak d4." },
+      { san: "d6", comment: "Hitam mengontrol petak e5 dan c5." },
+      { san: "d4", comment: "Open Sicilian: Putih mendobrak pusat." },
+      { san: "cxd4", comment: "Hitam menukar pion sayap dengan pion pusat putih." },
+      { san: "Nxd4", comment: "Kuda putih berada di sentral." },
+      { san: "Nf6", comment: "Hitam mengembangkan kuda dan menyerang pion e4." },
+      { san: "Nc3", comment: "Putih melindungi e4." },
+      { san: "a6", comment: "Langkah Najdorf legendaris: mengontrol b5 dan mempersiapkan ...e5 atau ...b5." }
+    ]
+  },
+  {
+    id: "black-sicilian-dragon",
+    side: "black",
+    name: "Sicilian Defense: Dragon Variation",
+    eco: "B70",
+    moves: "1.e4 c5 2.Nf3 d6 3.d4 cxd4 4.Nxd4 Nf6 5.Nc3 g6",
+    description: "Formasi naga dengan fianchetto Gajah di g7 yang memotong seluruh diagonal panjang dari h8 sampai a1.",
+    plans: [
+      "Fianchetto Gajah ke g7 (Gajah Naga penguasa diagonal)",
+      "Lakukan rokade pendek dan serang sayap menteri via c-file",
+      "Tempatkan Kuda di c4 atau korbankan benteng di c3 untuk menghancurkan pertahanan putih"
+    ],
+    movesList: [
+      { san: "e4", comment: "Putih melangkah 1.e4." },
+      { san: "c5", comment: "Sicilian Defense." },
+      { san: "Nf3", comment: "Persiapan d4." },
+      { san: "d6", comment: "Kontrol petak sentral." },
+      { san: "d4", comment: "Dobrak sentral." },
+      { san: "cxd4", comment: "Pertukaran pion." },
+      { san: "Nxd4", comment: "Sentralisasi kuda putih." },
+      { san: "Nf6", comment: "Serang pion e4." },
+      { san: "Nc3", comment: "Lindungi e4." },
+      { san: "g6", comment: "The Dragon! Membuka sarang bagi Gajah di g7." }
+    ]
   },
   {
     id: "black-caro-kann",
     side: "black",
-    name: "Caro-Kann Defense",
+    name: "Caro-Kann Defense: Classical",
     eco: "B10",
-    moves: "1.e4 c6 2.d4 d5",
-    description: "Pertahanan favorit Grandmaster. Sangat solid, struktur pion sehat, dan Bishop petak terang bebas berkembang.",
+    moves: "1.e4 c6 2.d4 d5 3.Nc3 dxe4 4.Nxe4 Bf5",
+    description: "Pertahanan batu karang favorit juara dunia Anatoly Karpov. Menjamin struktur pion sehat dan posisi endgame yang sangat unggul.",
     plans: [
-      "Tantang pion e4 putih dengan d5",
-      "Keluarkan Bishop c8 ke f5 atau g4 sebelum menutup e6",
-      "Manfaatkan endgame yang menguntungkan karena struktur pion solid"
+      "Tantang pion e4 putih dengan dorongan kuat ...d5",
+      "Keluarkan Gajah c8 ke f5 secara aktif sebelum menutup rantai pion ...e6",
+      "Kuasai endgame berkat struktur pion tanpa kelemahan"
     ],
-    status: "learning"
+    movesList: [
+      { san: "e4", comment: "Putih membuka 1.e4." },
+      { san: "c6", comment: "Caro-Kann: Mempersiapkan dorongan ...d5 dengan dukungan pion c6." },
+      { san: "d4", comment: "Putih mengambil kontrol pusat penuh." },
+      { san: "d5", comment: "Hitam langsung menantang pusat putih." },
+      { san: "Nc3", comment: "Putih melindungi e4 dan mengembangkan kuda." },
+      { san: "dxe4", comment: "Hitam menukar pion." },
+      { san: "Nxe4", comment: "Kuda putih memakan kembali." },
+      { san: "Bf5", comment: "Keunggulan Caro-Kann: Gajah keluar aktif ke f5 menyerang kuda sebelum pion e6 dimajukan." }
+    ]
   },
   {
-    id: "black-qgd",
+    id: "black-french-defense",
     side: "black",
-    name: "Queen's Gambit Declined",
-    eco: "D30",
-    moves: "1.d4 d5 2.c4 e6",
-    description: "Pertahanan klasik terhadap 1.d4. Mempertahankan pijakan kuat di petak pusat d5.",
+    name: "French Defense: Winawer Variation",
+    eco: "C15",
+    moves: "1.e4 e6 2.d4 d5 3.Nc3 Bb4",
+    description: "Pertahanan solid dengan rantai pion kokoh di sayap raja dan serangan balik ganas pada rantai pion putih di sayap menteri.",
     plans: [
-      "Pertahankan titik sentral d5 dengan kokoh",
-      "Kembangkan Be7, Nf6, dan rokade pendek",
-      "Bebaskan posisi dengan dorongan c5 atau e5 nanti"
+      "Kunci pusat dengan e6 dan d5",
+      "Paku Kuda c3 putih dengan Gajah b4 (Winawer Pin)",
+      "Bongkar struktur pion putih dengan dorongan ...c5 dan serangan di c-file"
     ],
-    status: "learning"
+    movesList: [
+      { san: "e4", comment: "Langkah 1.e4." },
+      { san: "e6", comment: "French Defense: Mempersiapkan ...d5." },
+      { san: "d4", comment: "Putih menguasai sentral." },
+      { san: "d5", comment: "Hitam menantang sentral." },
+      { san: "Nc3", comment: "Putih menjaga e4." },
+      { san: "Bb4", comment: "Winawer Pin: Memaku Kuda c3 terhadap Raja putih." }
+    ]
+  },
+  {
+    id: "black-queens-gambit",
+    side: "black",
+    name: "Queen's Gambit Declined (QGD)",
+    eco: "D30",
+    moves: "1.d4 d5 2.c4 e6 3.Nc3 Nf6 4.Bg5 Be7",
+    description: "Pertahanan klasik paling teruji sepanjang masa melawan 1.d4. Mempertahankan jangkar kokoh di petak sentral d5.",
+    plans: [
+      "Pertahankan jangkar d5 dengan kuat",
+      "Kembangkan perwira minor (Nf6, Be7) dan lakukan rokade pendek",
+      "Bebaskan posisi di babak tengah dengan dorongan ...c5 atau ...e5"
+    ],
+    movesList: [
+      { san: "d4", comment: "Putih membuka dengan 1.d4." },
+      { san: "d5", comment: "Hitam mengimbangi sentral." },
+      { san: "c4", comment: "Queen's Gambit: Putih menawarkan pertukaran pion c4 untuk menguasai pusat." },
+      { san: "e6", comment: "Declined: Menolak gambit dan memperkuat pion d5." },
+      { san: "Nc3", comment: "Putih menambah tekanan ke d5." },
+      { san: "Nf6", comment: "Hitam memperkuat pertahanan d5." },
+      { san: "Bg5", comment: "Putih mem-pin Kuda f6." },
+      { san: "Be7", comment: "Hitam melepaskan pin dan bersiap rokade." }
+    ]
+  },
+  {
+    id: "black-kings-indian",
+    side: "black",
+    name: "King's Indian Defense (KID)",
+    eco: "E60",
+    moves: "1.d4 Nf6 2.c4 g6 3.Nc3 Bg7 4.e4 d6",
+    description: "Pertahanan hipermodern yang dinamis. Membiarkan Putih membangun pusat lebar untuk kemudian dihancurkan lewat serangan badai di sayap raja.",
+    plans: [
+      "Fianchetto Gajah ke g7 dan rokade pendek",
+      "Tusuk pusat putih dengan dorongan ...e5",
+      "Luncurkan badai pion ...f5 di sayap raja untuk memburu Raja putih"
+    ],
+    movesList: [
+      { san: "d4", comment: "Langkah 1.d4." },
+      { san: "Nf6", comment: "Mencegah Putih langsung memainkan e4." },
+      { san: "c4", comment: "Putih merebut ruang sayap menteri." },
+      { san: "g6", comment: "Persiapan fianchetto Gajah." },
+      { san: "Nc3", comment: "Putih mengontrol sentral." },
+      { san: "Bg7", comment: "Gajah menguasai diagonal h8-a1." },
+      { san: "e4", comment: "Putih membangun pusat lebar." },
+      { san: "d6", comment: "Hitam mengontrol e5 dan bersiap mendobrak dengan ...e5." }
+    ]
+  },
+  {
+    id: "white-english",
+    side: "white",
+    name: "English Opening (Flank Attack)",
+    eco: "A10",
+    moves: "1.c4 e5 2.Nc3 Nf6 3.g3 d5 4.cxd5 Nxd5 5.Bg2",
+    description: "Pendekatan posisional fleksibel dari sayap (flank) untuk mengontrol petak d5 tanpa langsung membuka jalur tengah.",
+    plans: [
+      "Kuasai petak sentral d5 secara tidak langsung",
+      "Fianchetto Gajah ke g2 untuk mendominasi diagonal terang",
+      "Manfaatkan keunggulan ruang di sayap menteri dengan ekspansi b4"
+    ],
+    movesList: [
+      { san: "c4", comment: "English Opening: Mengontrol d5 dari sayap." },
+      { san: "e5", comment: "Reversed Sicilian: Hitam mengklaim petak sentral." },
+      { san: "Nc3", comment: "Putih menambah kontrol ke petak d5 & e4." },
+      { san: "Nf6", comment: "Hitam mengembangkan kuda." },
+      { san: "g3", comment: "Persiapan Gajah ke g2." },
+      { san: "d5", comment: "Hitam mendobrak pusat." },
+      { san: "cxd5", comment: "Putih menukar pion sayap dengan pion pusat." },
+      { san: "Nxd5", comment: "Hitam memakan kembali." },
+      { san: "Bg2", comment: "Gajah putih menyerang Kuda d5 di diagonal panjang." }
+    ]
+  },
+  {
+    id: "black-scandinavian",
+    side: "black",
+    name: "Scandinavian Defense (Center Counter)",
+    eco: "B01",
+    moves: "1.e4 d5 2.exd5 Qxd5 3.Nc3 Qa5 4.d4 Nf6",
+    description: "Serangan sentral paling langsung pada langkah pertama. Membuka jalur terbuka untuk seluruh perwira hitam sejak awal permainan.",
+    plans: [
+      "Tantang pion e4 putih secara instan pada langkah 1",
+      "Tempatkan Queen di pos aman a5 atau d6",
+      "Kembangkan Gajah ke f5, kuda ke f6, dan lakukan rokade panjang"
+    ],
+    movesList: [
+      { san: "e4", comment: "Putih membuka 1.e4." },
+      { san: "d5", comment: "Scandinavian: Langsung menyerang pion e4 putih!" },
+      { san: "exd5", comment: "Putih memakan pion d5." },
+      { san: "Qxd5", comment: "Queen hitam masuk ke tengah papan." },
+      { san: "Nc3", comment: "Putih mengembangkan kuda sambil menyerang Queen." },
+      { san: "Qa5", comment: "Posisi standar Queen Skandinavia: aman dan mengontrol rank ke-5." },
+      { san: "d4", comment: "Putih merebut sentral." },
+      { san: "Nf6", comment: "Hitam mengembangkan kuda dan mengontrol e4." }
+    ]
   }
 ];
 
@@ -654,3 +997,4 @@ window.LESSONS_DATA = LESSONS_DATA;
 window.TACTICS_PUZZLES = TACTICS_PUZZLES;
 window.GM_QUOTES = GM_QUOTES;
 window.OPENING_REPERTOIRE = OPENING_REPERTOIRE;
+

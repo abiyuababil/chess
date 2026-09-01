@@ -824,7 +824,7 @@ class ChessApp {
   }
 
   /* ==========================================================================
-     Tactics Lab Controller
+     Tactics Lab Controller (100 Tactical Puzzles)
      ========================================================================== */
   initTacticsBoard() {
     const container = document.getElementById('tactics-board-container');
@@ -836,16 +836,71 @@ class ChessApp {
       onMove: (move, game) => this.handleTacticsMove(move, game)
     });
 
+    this.filteredPuzzles = [...TACTICS_PUZZLES];
+    this.populateTacticsDropdown();
+    this.loadTacticsPuzzle(0);
+    this.updateTacticsBadge();
+  }
+
+  populateTacticsDropdown() {
+    const select = document.getElementById('tactics-jump-select');
+    if (!select) return;
+
+    select.innerHTML = this.filteredPuzzles.map((p, idx) => {
+      const isSolved = this.state.puzzlesSolved.includes(p.id) ? '✓ ' : '';
+      return `<option value="${idx}">${isSolved}#${p.id}: ${p.title} (${p.motif})</option>`;
+    }).join('');
+  }
+
+  updateTacticsBadge() {
+    const badge = document.getElementById('tactics-progress-badge');
+    if (badge) {
+      badge.innerText = `${this.state.puzzlesSolved.length}/100 Selesai`;
+    }
+  }
+
+  filterTacticsByMotif(motif) {
+    if (motif === 'all') {
+      this.filteredPuzzles = [...TACTICS_PUZZLES];
+    } else {
+      this.filteredPuzzles = TACTICS_PUZZLES.filter(p => p.motif.toLowerCase().includes(motif.toLowerCase()));
+    }
+    this.populateTacticsDropdown();
     this.loadTacticsPuzzle(0);
   }
 
-  loadTacticsPuzzle(index) {
-    if (index >= TACTICS_PUZZLES.length) index = 0;
-    this.activePuzzleIndex = index;
-    const puzzle = TACTICS_PUZZLES[index];
+  jumpToPuzzle(filteredIndex) {
+    this.loadTacticsPuzzle(filteredIndex);
+  }
+
+  randomPuzzle() {
+    const rand = Math.floor(Math.random() * this.filteredPuzzles.length);
+    this.loadTacticsPuzzle(rand);
+  }
+
+  prevPuzzle() {
+    let prev = this.activePuzzleFilteredIndex - 1;
+    if (prev < 0) prev = this.filteredPuzzles.length - 1;
+    this.loadTacticsPuzzle(prev);
+  }
+
+  nextPuzzle() {
+    let next = this.activePuzzleFilteredIndex + 1;
+    if (next >= this.filteredPuzzles.length) next = 0;
+    this.loadTacticsPuzzle(next);
+  }
+
+  loadTacticsPuzzle(filteredIndex) {
+    if (filteredIndex < 0 || filteredIndex >= this.filteredPuzzles.length) filteredIndex = 0;
+    this.activePuzzleFilteredIndex = filteredIndex;
+    const puzzle = this.filteredPuzzles[filteredIndex];
     if (!puzzle) return;
 
+    this.currentPuzzle = puzzle;
     this.tacticsBoard.setPosition(puzzle.fen);
+
+    const select = document.getElementById('tactics-jump-select');
+    if (select) select.value = filteredIndex;
 
     const titleElem = document.getElementById('puzzle-title');
     const motifElem = document.getElementById('puzzle-motif-badge');
@@ -853,7 +908,7 @@ class ChessApp {
     const instructElem = document.getElementById('puzzle-instruction');
     const feedbackElem = document.getElementById('puzzle-feedback-box');
 
-    if (titleElem) titleElem.innerText = `Puzzle #${index + 1}: ${puzzle.title}`;
+    if (titleElem) titleElem.innerText = `Puzzle #${puzzle.id}: ${puzzle.title}`;
     if (motifElem) motifElem.innerText = puzzle.motif;
     if (ratingElem) ratingElem.innerText = `Rating ~${puzzle.rating}`;
     if (instructElem) instructElem.innerText = puzzle.instruction;
@@ -864,7 +919,7 @@ class ChessApp {
   }
 
   handleTacticsMove(move, game) {
-    const puzzle = TACTICS_PUZZLES[this.activePuzzleIndex];
+    const puzzle = this.currentPuzzle;
     if (!puzzle) return;
 
     const moveUci = move.from + move.to + (move.promotion || '');
@@ -873,7 +928,7 @@ class ChessApp {
     if (moveUci === puzzle.solution[0]) {
       if (feedback) {
         feedback.className = 'puzzle-feedback success';
-        feedback.innerText = `🎉 BENAR! ${puzzle.explanation}`;
+        feedback.innerText = `BENAR! ${puzzle.explanation}`;
       }
       this.audio.playVictory();
 
@@ -882,34 +937,32 @@ class ChessApp {
         this.state.puzzleRating += 15;
         this.saveState();
         this.renderDashboard();
+        this.updateTacticsBadge();
+        this.populateTacticsDropdown();
       }
     } else {
       if (feedback) {
         feedback.className = 'puzzle-feedback error';
-        feedback.innerText = '❌ Kurang tepat. Coba analisa kembali motif taktiknya!';
+        feedback.innerText = 'Kurang tepat. Coba analisa kembali posisi!';
       }
       this.audio.playError();
       setTimeout(() => {
         this.tacticsBoard.setPosition(puzzle.fen);
-      }, 1000);
+      }, 900);
     }
   }
 
   showPuzzleHint() {
-    const puzzle = TACTICS_PUZZLES[this.activePuzzleIndex];
+    const puzzle = this.currentPuzzle;
     const feedback = document.getElementById('puzzle-feedback-box');
     if (puzzle && feedback) {
       feedback.className = 'puzzle-feedback success';
-      feedback.innerText = `💡 Hint: Cari langkah pembuka dengan bidak di petak ${puzzle.solution[0].slice(0, 2)}`;
+      feedback.innerText = `Hint: Perhatikan perwira di petak ${puzzle.solution[0].slice(0, 2)}`;
     }
   }
 
-  nextPuzzle() {
-    this.loadTacticsPuzzle(this.activePuzzleIndex + 1);
-  }
-
   /* ==========================================================================
-     Repertoire View
+     Interactive Opening Repertoire Controller (Step-by-Step Viewer)
      ========================================================================== */
   renderRepertoire() {
     const container = document.getElementById('repertoire-grid-container');
@@ -918,12 +971,15 @@ class ChessApp {
     container.innerHTML = OPENING_REPERTOIRE.map(rep => `
       <div class="repertoire-card">
         <div class="repertoire-header">
-          <h3>${rep.side === 'white' ? '♔' : '♚'} ${rep.name}</h3>
-          <span class="eco-badge">${rep.eco}</span>
+          <div>
+            <h3 style="font-size:17px;color:#fff;">${rep.side === 'white' ? '♔' : '♚'} ${rep.name}</h3>
+            <span class="eco-badge" style="margin-top:4px;display:inline-block;">ECO ${rep.eco}</span>
+          </div>
+          <button class="btn-sm-action" onclick="window.chessApp.openRepertoireModal('${rep.id}')">Buka Langkah Papan →</button>
         </div>
         <div class="moves-pill">${rep.moves}</div>
-        <p style="font-size:13px;color:var(--text-muted);">${rep.description}</p>
-        <div style="background:rgba(255,255,255,0.02);padding:12px;border-radius:6px;">
+        <p style="font-size:13px;color:var(--text-muted);line-height:1.4;">${rep.description}</p>
+        <div style="background:rgba(255,255,255,0.02);padding:12px;border-radius:6px;margin-top:auto;">
           <strong style="font-size:12px;color:var(--primary);display:block;margin-bottom:6px;">Rencana Utama:</strong>
           <ul style="font-size:12px;color:var(--text-muted);padding-left:16px;">
             ${rep.plans.map(p => `<li>${p}</li>`).join('')}
@@ -932,9 +988,181 @@ class ChessApp {
       </div>
     `).join('');
   }
+
+  openRepertoireModal(repId) {
+    this.closeRepertoireModal();
+
+    const rep = OPENING_REPERTOIRE.find(r => r.id === repId);
+    if (!rep) return;
+
+    this.activeRepertoire = rep;
+    this.repStepIndex = 0;
+
+    // Build timeline of FENs and moves
+    const replay = new Chess();
+    const steps = [{ fen: replay.fen(), san: 'Awal', comment: 'Posisi awal sebelum langkah pembuka dimainkan.', from: null, to: null }];
+
+    rep.movesList.forEach((m, idx) => {
+      const res = replay.move(m.san);
+      if (res) {
+        steps.push({
+          fen: replay.fen(),
+          san: `${Math.floor(idx / 2) + 1}${idx % 2 === 0 ? '.' : '...'} ${res.san}`,
+          comment: m.comment,
+          from: res.from,
+          to: res.to
+        });
+      }
+    });
+
+    this.activeRepertoireSteps = steps;
+
+    const modal = document.createElement('div');
+    modal.className = 'analysis-modal-backdrop';
+    modal.id = 'repertoire-trainer-modal';
+
+    const timelineHtml = steps.map((s, idx) => `
+      <button class="rep-timeline-btn ${idx === 0 ? 'active' : ''}" id="rep-step-btn-${idx}" onclick="window.chessApp.stepRepertoire(${idx})">
+        <span class="step-num">${idx === 0 ? 'Start' : idx}</span>
+        <span class="step-san">${s.san}</span>
+      </button>
+    `).join('');
+
+    modal.innerHTML = `
+      <div class="analysis-modal">
+        <div class="analysis-modal-header">
+          <div>
+            <h2>${rep.name} (ECO ${rep.eco})</h2>
+            <p>Trainer Pembukaan Interaktif • Panduan Langkah Demi Langkah</p>
+          </div>
+          <button class="btn-close-modal" onclick="window.chessApp.closeRepertoireModal()">✕</button>
+        </div>
+
+        <div class="analysis-modal-body">
+          <!-- Left: Interactive Board -->
+          <div class="analysis-board-side">
+            <div id="rep-board-container"></div>
+            
+            <div class="analysis-nav-controls">
+              <button class="btn-step" onclick="window.chessApp.stepRepertoire(0)" title="Awal">|◀</button>
+              <button class="btn-step" onclick="window.chessApp.stepRepertoire(window.chessApp.repStepIndex - 1)" title="Sebelumnya">◀</button>
+              <span id="rep-step-display" style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;">Langkah 0/${steps.length - 1}</span>
+              <button class="btn-step" onclick="window.chessApp.stepRepertoire(window.chessApp.repStepIndex + 1)" title="Berikutnya">▶</button>
+              <button class="btn-step" onclick="window.chessApp.stepRepertoire(${steps.length - 1})" title="Akhir">▶|</button>
+              <button class="btn-sm-action" id="btn-rep-autoplay" onclick="window.chessApp.toggleRepertoireAutoPlay()" style="margin-left:8px;">▶ Putar Otomatis</button>
+            </div>
+          </div>
+
+          <!-- Right: Move-by-Move Commentary & Plans -->
+          <div class="analysis-moments-side">
+            <div class="rep-timeline-bar">
+              ${timelineHtml}
+            </div>
+
+            <!-- Active Move Commentary Card -->
+            <div class="rep-commentary-box" id="rep-commentary-box">
+              <h4 id="rep-commentary-title" style="font-size:14px;color:var(--primary);margin-bottom:6px;">Langkah: Awal</h4>
+              <p id="rep-commentary-text" style="font-size:13px;color:var(--text-main);line-height:1.5;">${steps[0].comment}</p>
+            </div>
+
+            <div style="background:rgba(255,255,255,0.03);border:1px solid var(--bg-card-border);padding:14px;border-radius:8px;margin-top:auto;">
+              <strong style="font-size:13px;color:#fff;display:block;margin-bottom:8px;">Rencana Strategis Utama:</strong>
+              <ul style="font-size:12.5px;color:var(--text-muted);padding-left:18px;display:flex;flex-direction:column;gap:6px;">
+                ${rep.plans.map(p => `<li>${p}</li>`).join('')}
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="analysis-modal-footer">
+          <button class="btn-game-action" onclick="window.chessApp.closeRepertoireModal()">Tutup</button>
+          <a href="#play" class="btn-game-action primary" onclick="window.chessApp.closeRepertoireModal(); window.chessApp.newGame('${rep.side}')">Latih Pembukaan Ini vs Bot</a>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    this.repertoireBoard = new ChessBoardComponent('rep-board-container', {
+      orientation: rep.side,
+      interactive: false
+    });
+
+    this.stepRepertoire(1);
+  }
+
+  stepRepertoire(stepIdx) {
+    if (!this.activeRepertoireSteps || this.activeRepertoireSteps.length === 0) return;
+    if (stepIdx < 0) stepIdx = 0;
+    if (stepIdx >= this.activeRepertoireSteps.length) stepIdx = this.activeRepertoireSteps.length - 1;
+
+    this.repStepIndex = stepIdx;
+    const step = this.activeRepertoireSteps[stepIdx];
+
+    if (this.repertoireBoard) {
+      this.repertoireBoard.setPosition(step.fen);
+      if (step.from && step.to) {
+        this.repertoireBoard.setHint({ from: step.from, to: step.to });
+      } else {
+        this.repertoireBoard.clearHint();
+      }
+
+      // Update Step text
+      const stepDisplay = document.getElementById('rep-step-display');
+      if (stepDisplay) stepDisplay.innerText = `Langkah ${stepIdx}/${this.activeRepertoireSteps.length - 1}`;
+
+      // Update Commentary Box
+      const comTitle = document.getElementById('rep-commentary-title');
+      const comText = document.getElementById('rep-commentary-text');
+      if (comTitle) comTitle.innerText = `Langkah: ${step.san}`;
+      if (comText) comText.innerText = step.comment;
+
+      // Update Timeline active button
+      document.querySelectorAll('.rep-timeline-btn').forEach((b, idx) => {
+        if (idx === stepIdx) b.classList.add('active');
+        else b.classList.remove('active');
+      });
+    }
+  }
+
+  toggleRepertoireAutoPlay() {
+    const btn = document.getElementById('btn-rep-autoplay');
+    if (this.repAutoPlayInterval) {
+      clearInterval(this.repAutoPlayInterval);
+      this.repAutoPlayInterval = null;
+      if (btn) btn.innerText = '▶ Putar Otomatis';
+    } else {
+      if (btn) btn.innerText = '⏸ Jeda';
+      this.repAutoPlayInterval = setInterval(() => {
+        let next = this.repStepIndex + 1;
+        if (next >= this.activeRepertoireSteps.length) {
+          clearInterval(this.repAutoPlayInterval);
+          this.repAutoPlayInterval = null;
+          if (btn) btn.innerText = '▶ Putar Ulang';
+        } else {
+          this.stepRepertoire(next);
+        }
+      }, 1300);
+    }
+  }
+
+  closeRepertoireModal() {
+    if (this.repAutoPlayInterval) {
+      clearInterval(this.repAutoPlayInterval);
+      this.repAutoPlayInterval = null;
+    }
+    const modal = document.getElementById('repertoire-trainer-modal');
+    if (modal) {
+      document.body.removeChild(modal);
+    }
+    this.repertoireBoard = null;
+    this.activeRepertoire = null;
+    this.activeRepertoireSteps = null;
+  }
 }
 
 // Initialize on DOM Ready
 document.addEventListener('DOMContentLoaded', () => {
   window.chessApp = new ChessApp();
 });
+

@@ -348,9 +348,39 @@
       <section id="view-tactics" class="view-section">
         <div class="section-header">
           <div>
-            <h2>Tactics Lab</h2>
-            <p>Pecahkan puzzle taktik untuk melatih ketajaman visual dan kalkulasi Anda.</p>
+            <h2>Tactics Lab (100 Tactical Puzzles)</h2>
+            <p>100 Puzzle taktik kurasi master untuk melatih ketajaman visual, motif serangan, dan kalkulasi Anda.</p>
           </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span class="nav-tag" style="background:rgba(16,185,129,0.15);color:var(--primary);" id="tactics-progress-badge">0/100 Selesai</span>
+          </div>
+        </div>
+
+        <!-- Puzzle Quick Navigator & Filter Bar -->
+        <div class="tactics-nav-bar">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <label style="font-size:12px;font-weight:700;color:var(--text-muted);">Pilih Puzzle:</label>
+            <select id="tactics-jump-select" class="tactics-select" onchange="window.chessApp.jumpToPuzzle(parseInt(this.value))"></select>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <label style="font-size:12px;font-weight:700;color:var(--text-muted);">Filter Motif:</label>
+            <select id="tactics-motif-filter" class="tactics-select" onchange="window.chessApp.filterTacticsByMotif(this.value)">
+              <option value="all">Semua Motif (100 Puzzle)</option>
+              <option value="Fork">Fork (Garpu)</option>
+              <option value="Pin">Pin (Memaku)</option>
+              <option value="Skewer">Skewer (Tusuk Sate)</option>
+              <option value="Discovered Attack">Discovered Attack</option>
+              <option value="Back Rank Mate">Back Rank Mate</option>
+              <option value="Smothered Mate">Smothered Mate</option>
+              <option value="Deflection">Deflection & Overload</option>
+              <option value="Zwischenzug">Zwischenzug (Langkah Sela)</option>
+              <option value="Greek Gift">Greek Gift & Serangan</option>
+              <option value="Endgame Technique">Endgame Technique</option>
+              <option value="Trapped Piece">Trapped Piece</option>
+              <option value="Queen Sacrifice">Queen Sacrifice & Mate</option>
+            </select>
+          </div>
+          <button class="btn-sm-action" onclick="window.chessApp.randomPuzzle()">🎲 Puzzle Acak</button>
         </div>
 
         <div class="tactics-layout">
@@ -358,22 +388,23 @@
 
           <div class="tactics-panel">
             <div style="display:flex;justify-content:space-between;align-items:center;">
-              <h3 id="puzzle-title" style="font-size:20px;color:#fff;">Puzzle #1</h3>
+              <h3 id="puzzle-title" style="font-size:18px;color:#fff;">Puzzle #1</h3>
               <div style="display:flex;gap:8px;">
                 <span class="eco-badge" id="puzzle-motif-badge">Fork</span>
                 <span class="nav-tag" id="puzzle-rating-badge">Rating ~600</span>
               </div>
             </div>
 
-            <p id="puzzle-instruction" style="font-size:14px;color:var(--text-muted);">
+            <p id="puzzle-instruction" style="font-size:14px;color:var(--text-muted);margin:12px 0;">
               Temukan langkah terbaik untuk memenangkan keunggulan.
             </p>
 
             <div class="puzzle-feedback" id="puzzle-feedback-box"></div>
 
-            <div style="display:flex;gap:12px;margin-top:auto;">
+            <div style="display:flex;gap:8px;margin-top:auto;flex-wrap:wrap;">
+              <button class="btn-game-action" onclick="window.chessApp.prevPuzzle()">◀ Sebelumnya</button>
               <button class="btn-game-action" onclick="window.chessApp.showPuzzleHint()">Petunjuk</button>
-              <button class="btn-game-action primary" onclick="window.chessApp.nextPuzzle()">Puzzle Berikutnya →</button>
+              <button class="btn-game-action primary" onclick="window.chessApp.nextPuzzle()">Berikutnya ▶</button>
             </div>
           </div>
         </div>
