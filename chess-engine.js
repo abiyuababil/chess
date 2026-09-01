@@ -371,9 +371,9 @@ class ChessEngine {
   }
 
   /**
-   * High-Precision Game Analyzer with Multi-Move Continuation Lines (PV)
+   * Ultra-Fast Non-Blocking Game Analyzer with Progress Feedback
    */
-  analyzeGame(movesHistory, playerColor = 'white', startingFen = null) {
+  async analyzeGameAsync(movesHistory, playerColor = 'white', startingFen = null, onProgress = null) {
     const replayGame = new Chess();
     if (startingFen) {
       try { replayGame.load(startingFen); } catch (e) {}
@@ -395,68 +395,23 @@ class ChessEngine {
     }
 
     let moveAccuracies = [];
+    const totalMoves = movesHistory.length;
 
-    for (let i = 0; i < movesHistory.length; i++) {
+    for (let i = 0; i < totalMoves; i++) {
+      // Yield to browser event loop every 3 moves to guarantee 60 FPS
+      if (i % 3 === 0) {
+        if (onProgress) {
+          onProgress(Math.round((i / totalMoves) * 100));
+        }
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }
+
       const fenBefore = replayGame.fen();
       const isWhiteTurn = replayGame.turn() === 'w';
       const isPlayerMove = (isWhiteTurn && playerColor === 'white') || (!isWhiteTurn && playerColor === 'black');
 
       const rawEvalBefore = this.fastEvaluatePosition(replayGame);
       const winPctBefore = this.evalToWinPct(playerColor === 'white' ? rawEvalBefore : -rawEvalBefore);
-
-      // Deep 3-ply Minimax Search with Principal Variation (PV)
-      let bestMoveBefore = null;
-      let pvMoves = [];
-      let bestContinuationSteps = [];
-      let bestContinuationSAN = '';
-
-      if (isPlayerMove) {
-        const searchRes = this.minimaxPV(replayGame, 3, -Infinity, Infinity, isWhiteTurn);
-        bestMoveBefore = searchRes.bestMove;
-        pvMoves = searchRes.pv || [];
-
-        // Build continuation steps for interactive review
-        if (pvMoves.length > 0) {
-          const simGame = new Chess(fenBefore);
-          bestContinuationSteps.push({
-            fen: fenBefore,
-            san: 'Posisi Saat Ini',
-            comment: 'Posisi sebelum Anda melangkah.',
-            from: null,
-            to: null
-          });
-
-          const sanList = [];
-          for (let pIdx = 0; pIdx < pvMoves.length; pIdx++) {
-            const pvMove = pvMoves[pIdx];
-            const simRes = simGame.move(pvMove);
-            if (simRes) {
-              const movePrefix = `${Math.floor((i + pIdx) / 2) + 1}${simGame.turn() === 'b' ? '.' : '...'}`;
-              sanList.push(`${movePrefix} ${simRes.san}`);
-              
-              let stepExplanation = '';
-              if (simRes.captured) {
-                stepExplanation = `Memakan perwira di ${simRes.to} untuk merebut keunggulan materi poin.`;
-              } else if (simRes.san.includes('+')) {
-                stepExplanation = `Memberi skak ke ${simRes.to} menekan Raja dan memaksa lawan bertahan.`;
-              } else if (pIdx === 0) {
-                stepExplanation = `Langkah terbaik yang mendominasi kontrol sentral dan menekan kelemahan lawan.`;
-              } else {
-                stepExplanation = `Langkah lanjutan terbaik untuk memaksimalkan keuntungan taktis posisi.`;
-              }
-
-              bestContinuationSteps.push({
-                fen: simGame.fen(),
-                san: `${movePrefix} ${simRes.san}`,
-                comment: stepExplanation,
-                from: simRes.from,
-                to: simRes.to
-              });
-            }
-          }
-          bestContinuationSAN = sanList.join(' ');
-        }
-      }
 
       const moveStr = movesHistory[i];
       let moveObj = null;
@@ -471,11 +426,12 @@ class ChessEngine {
       const rawEvalAfter = this.fastEvaluatePosition(replayGame);
       const winPctAfter = this.evalToWinPct(playerColor === 'white' ? rawEvalAfter : -rawEvalAfter);
       const moveNumber = Math.floor(i / 2) + 1;
-
-      // Win rate loss for the player (0% to 100%)
       const winPctLoss = Math.max(0, winPctBefore - winPctAfter);
 
       let classification = 'good';
+      let bestMoveBefore = null;
+      let bestContinuationSteps = [];
+      let bestContinuationSAN = '';
       let whyBestIsBetter = '';
       let whyPlayedIsBad = '';
 
@@ -483,12 +439,10 @@ class ChessEngine {
         const moveAcc = Math.max(0, Math.min(100, 100 - (winPctLoss * 2.2)));
         moveAccuracies.push(moveAcc);
 
-        const isExactMatch = bestMoveBefore && ((moveObj.from + moveObj.to) === (bestMoveBefore.from + bestMoveBefore.to));
-
         if (replayGame.in_checkmate()) {
           classification = 'best';
           analysisReport.bestMoves++;
-        } else if (isExactMatch || winPctLoss <= 4) {
+        } else if (winPctLoss <= 4) {
           classification = 'best';
           analysisReport.bestMoves++;
         } else if (winPctLoss >= 25 || (rawEvalAfter <= (playerColor === 'white' ? -80000 : 80000))) {
@@ -504,25 +458,94 @@ class ChessEngine {
           classification = 'good';
         }
 
-        // Generate contextual tactical reasoning
-        if (bestMoveBefore) {
-          if (bestMoveBefore.captured) {
-            whyBestIsBetter = `Saran langkah ${bestMoveBefore.san} langsung memakan bidak ${bestMoveBefore.to} dan memenangkan materi.`;
-          } else if (bestMoveBefore.san.includes('+')) {
-            whyBestIsBetter = `Saran langkah ${bestMoveBefore.san} memberikan skak tajam yang merusak formasi lawan.`;
-          } else {
-            whyBestIsBetter = `Saran langkah ${bestMoveBefore.san} memaksimalkan koordinasi perwira dan menekan titik lemah lawan.`;
-          }
-        }
+        // Only compute deep continuation PV for suboptimal moves (blunders, mistakes, inaccuracies)
+        if (['blunder', 'mistake', 'inaccuracy'].includes(classification)) {
+          const simSearchGame = new Chess(fenBefore);
+          const searchRes = this.minimaxPV(simSearchGame, 2, -Infinity, Infinity, isWhiteTurn);
+          bestMoveBefore = searchRes.bestMove;
+          const pvMoves = searchRes.pv || [];
 
-        if (moveObj.captured) {
-          whyPlayedIsBad = `Langkah ${moveObj.san} Anda memakan bidak, tetapi membiarkan lawan mendapatkan inisiatif serangan balik yang lebih berbahaya.`;
-        } else {
-          whyPlayedIsBad = `Langkah ${moveObj.san} Anda terlalu pasif dan melepaskan tekanan menguntungkan yang seharusnya bisa Anda manfaatkan.`;
+          if (pvMoves.length > 0) {
+            const simLineGame = new Chess(fenBefore);
+            bestContinuationSteps.push({
+              fen: fenBefore,
+              san: 'Posisi Saat Ini',
+              comment: 'Posisi sebelum Anda melangkah.',
+              from: null,
+              to: null
+            });
+
+            const sanList = [];
+            for (let pIdx = 0; pIdx < pvMoves.length; pIdx++) {
+              const pvMove = pvMoves[pIdx];
+              const simRes = simLineGame.move(pvMove);
+              if (simRes) {
+                const movePrefix = `${Math.floor((i + pIdx) / 2) + 1}${simLineGame.turn() === 'b' ? '.' : '...'}`;
+                sanList.push(`${movePrefix} ${simRes.san}`);
+                
+                let stepExplanation = '';
+                if (simRes.captured) {
+                  stepExplanation = `Memakan perwira di ${simRes.to} untuk merebut keunggulan materi poin.`;
+                } else if (simRes.san.includes('+')) {
+                  stepExplanation = `Memberi skak ke ${simRes.to} menekan Raja dan memaksa lawan bertahan.`;
+                } else if (pIdx === 0) {
+                  stepExplanation = `Langkah terbaik yang mendominasi kontrol sentral dan menekan kelemahan lawan.`;
+                } else {
+                  stepExplanation = `Langkah lanjutan terbaik untuk memaksimalkan keuntungan taktis posisi.`;
+                }
+
+                bestContinuationSteps.push({
+                  fen: simLineGame.fen(),
+                  san: `${movePrefix} ${simRes.san}`,
+                  comment: stepExplanation,
+                  from: simRes.from,
+                  to: simRes.to
+                });
+              }
+            }
+            bestContinuationSAN = sanList.join(' ');
+          }
+
+          if (bestMoveBefore) {
+            if (bestMoveBefore.captured) {
+              whyBestIsBetter = `Saran langkah ${bestMoveBefore.san} langsung memakan perwira di ${bestMoveBefore.to} dan memenangkan materi.`;
+            } else if (bestMoveBefore.san.includes('+')) {
+              whyBestIsBetter = `Saran langkah ${bestMoveBefore.san} memberikan skak tajam yang merusak formasi lawan.`;
+            } else {
+              whyBestIsBetter = `Saran langkah ${bestMoveBefore.san} memaksimalkan koordinasi perwira dan menekan titik lemah lawan.`;
+            }
+          }
+
+          if (moveObj.captured) {
+            whyPlayedIsBad = `Langkah ${moveObj.san} Anda memakan bidak, tetapi membiarkan lawan mendapatkan inisiatif serangan balik yang lebih berbahaya.`;
+          } else {
+            whyPlayedIsBad = `Langkah ${moveObj.san} Anda terlalu pasif dan melepaskan tekanan menguntungkan yang seharusnya bisa Anda manfaatkan.`;
+          }
+
+          analysisReport.keyMoments.push({
+            plyIndex: i,
+            moveNumber: moveNumber,
+            fenBefore: fenBefore,
+            fenAfter: replayGame.fen(),
+            playerMove: moveObj.san,
+            playedFrom: moveObj.from,
+            playedTo: moveObj.to,
+            bestMove: bestMoveBefore ? bestMoveBefore.san : 'N/A',
+            bestMoveFrom: bestMoveBefore ? bestMoveBefore.from : null,
+            bestMoveTo: bestMoveBefore ? bestMoveBefore.to : null,
+            continuationSteps: bestContinuationSteps,
+            continuationSAN: bestContinuationSAN,
+            whyBestIsBetter: whyBestIsBetter,
+            whyPlayedIsBad: whyPlayedIsBad,
+            classification: classification,
+            winPctLoss: Math.round(winPctLoss),
+            evalBefore: Math.round(winPctBefore),
+            evalAfter: Math.round(winPctAfter)
+          });
         }
       }
 
-      const posData = {
+      analysisReport.positions.push({
         plyIndex: i,
         moveNumber: moveNumber,
         san: moveObj.san,
@@ -530,40 +553,20 @@ class ChessEngine {
         evalScore: Math.round(this.evalToWinPct(rawEvalAfter)),
         classification: classification,
         isPlayerMove: isPlayerMove
-      };
-      analysisReport.positions.push(posData);
-
-      if (isPlayerMove && ['blunder', 'mistake', 'inaccuracy'].includes(classification)) {
-        analysisReport.keyMoments.push({
-          plyIndex: i,
-          moveNumber: moveNumber,
-          fenBefore: fenBefore,
-          fenAfter: replayGame.fen(),
-          playerMove: moveObj.san,
-          playedFrom: moveObj.from,
-          playedTo: moveObj.to,
-          bestMove: bestMoveBefore ? bestMoveBefore.san : 'N/A',
-          bestMoveFrom: bestMoveBefore ? bestMoveBefore.from : null,
-          bestMoveTo: bestMoveBefore ? bestMoveBefore.to : null,
-          continuationSteps: bestContinuationSteps,
-          continuationSAN: bestContinuationSAN,
-          whyBestIsBetter: whyBestIsBetter,
-          whyPlayedIsBad: whyPlayedIsBad,
-          classification: classification,
-          winPctLoss: Math.round(winPctLoss),
-          evalBefore: Math.round(winPctBefore),
-          evalAfter: Math.round(winPctAfter)
-        });
-      }
+      });
     }
 
-    // Overall Accuracy
     if (moveAccuracies.length > 0) {
       const avg = moveAccuracies.reduce((a, b) => a + b, 0) / moveAccuracies.length;
       analysisReport.accuracyPct = Math.round(avg);
     }
 
+    if (onProgress) onProgress(100);
     return analysisReport;
+  }
+
+  analyzeGame(movesHistory, playerColor = 'white', startingFen = null) {
+    return this.analyzeGameAsync(movesHistory, playerColor, startingFen);
   }
 }
 

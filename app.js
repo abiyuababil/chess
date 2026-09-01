@@ -510,7 +510,7 @@ class ChessApp {
     }, 250);
   }
 
-  openGameAnalysisModal(customTitle = 'Analisis Pertandingan', isWin = false) {
+  async openGameAnalysisModal(customTitle = 'Analisis Pertandingan', isWin = false) {
     this.closeAnalysisModal();
 
     if (!this.playBoard || this.playBoard.historyMoves.length === 0) {
@@ -518,8 +518,35 @@ class ChessApp {
       return;
     }
 
+    // Show Non-Blocking Loading Overlay
+    const loadingOverlay = document.createElement('div');
+    loadingOverlay.className = 'analysis-modal-backdrop';
+    loadingOverlay.id = 'game-analysis-loading';
+    loadingOverlay.innerHTML = `
+      <div style="background:#0d1527;border:1px solid rgba(255,255,255,0.1);padding:28px 36px;border-radius:16px;text-align:center;max-width:360px;width:90%;box-shadow:0 20px 40px rgba(0,0,0,0.6);">
+        <h3 style="font-size:16px;color:#fff;margin-bottom:6px;">Menganalisis Permainan...</h3>
+        <p style="font-size:12.5px;color:var(--text-muted);margin-bottom:16px;">Menghitung evaluasi langkah & taktik terbaik...</p>
+        <div style="background:rgba(255,255,255,0.06);border-radius:10px;height:8px;overflow:hidden;width:100%;">
+          <div id="analysis-progress-fill" style="background:var(--primary);width:10%;height:100%;transition:width 0.1s ease;"></div>
+        </div>
+        <div id="analysis-progress-label" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);margin-top:8px;">10%</div>
+      </div>
+    `;
+    document.body.appendChild(loadingOverlay);
+
     const moves = this.playBoard.historyMoves;
-    const analysis = this.engine.analyzeGame(moves, this.playerColor);
+    const progressFill = document.getElementById('analysis-progress-fill');
+    const progressLabel = document.getElementById('analysis-progress-label');
+
+    const analysis = await this.engine.analyzeGameAsync(moves, this.playerColor, null, (pct) => {
+      if (progressFill) progressFill.style.width = `${pct}%`;
+      if (progressLabel) progressLabel.innerText = `${pct}%`;
+    });
+
+    // Remove loading overlay
+    const existingLoading = document.getElementById('game-analysis-loading');
+    if (existingLoading) document.body.removeChild(existingLoading);
+
     this.lastAnalysis = analysis;
     this.analysisPly = analysis.positions.length > 0 ? analysis.positions.length - 1 : 0;
 
