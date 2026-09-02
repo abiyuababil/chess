@@ -17,8 +17,9 @@
   <!-- Stylesheet -->
   <link rel="stylesheet" href="styles.css">
   
-  <!-- chess.js library via CDN for game rules & move validation -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+  <!-- chess.js library for game rules & move validation -->
+  <script src="chess.min.js"></script>
+  <script>if (typeof Chess === 'undefined') document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"><\/script>');</script>
 </head>
 <body>
 

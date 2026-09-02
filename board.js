@@ -124,7 +124,7 @@ class ChessAudio {
 
 class ChessBoardComponent {
   constructor(containerId, options = {}) {
-    this.container = document.getElementById(containerId);
+    this.container = typeof containerId === 'string' ? document.getElementById(containerId) : containerId;
     this.game = new Chess();
     this.orientation = options.orientation || 'white';
     this.interactive = options.interactive !== false;
